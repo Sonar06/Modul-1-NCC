@@ -3,4 +3,8 @@ services:
     build: .
     container_name: service-lokal-modul1-ncc
     ports:
+<<<<<<< HEAD
       - "80:5000"
+=======
+      - "8080:5000"
+>>>>>>> 5a0c9c6 (Initial commit: tes endpoint health)
