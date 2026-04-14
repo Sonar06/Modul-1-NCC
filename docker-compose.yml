@@ -1,0 +1,6 @@
+services:
+  health-app:
+    build: .
+    container_name: service-lokal-modul1-ncc
+    ports:
+      - "80:5000"
