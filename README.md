@@ -1,4 +1,5 @@
-<img width="1009" height="128" alt="image" src="https://github.com/user-attachments/assets/7cd99ad1-e6f4-4e31-99e0-4e1ae3e433ca" /># Modul 1 NCC
+# Modul 1 NCC
+
 - nama: `Khairan Cherokee Musthofa`
 - NRP: `5025241215`
   
@@ -50,7 +51,7 @@ Tugas Modul 1 disini diminta untuk membuat sebuah endpoint health menggunakan do
   - buat VM Ubuntu
   - Copy dari yang dilokal ke VM juga jalankan `sudo apt-get update` dan juga intall docker
   - jalankan docker-compose
-  - setelah itu buka melalui `https://<publicIP>/health` jika saya http://20.41.122.247/health
+  - setelah itu buka melalui `http://<publicIP>/health` jika saya http://20.41.122.247/health
 
     
 
