@@ -42,7 +42,7 @@ Tugas Modul 1 disini diminta untuk membuat sebuah endpoint health menggunakan do
 - bukti endpoint dapat diakses
   <img width="1009" height="128" alt="image" src="https://github.com/user-attachments/assets/b64f3ca6-0fb8-4a99-917a-9c21bbf1c962" />
 
-  [Link](http://20.41.122.247/health)  **sudah dapat diakses publik**
+  [Link](http://20.41.122.247:3000/health)  **sudah dapat diakses publik**
 
 
   ### uploud ke VPS
@@ -52,6 +52,8 @@ Tugas Modul 1 disini diminta untuk membuat sebuah endpoint health menggunakan do
   - Copy dari yang dilokal ke VM juga jalankan `sudo apt-get update` dan juga intall docker
   - jalankan docker-compose
   - setelah itu buka melalui `http://<publicIP>/health` jika saya http://20.41.122.247/health
+
+  
 
     
 
