@@ -22,12 +22,10 @@ FROM python:3.11-alpine AS final
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PORT=5000
-# Mengarahkan Python agar mencari library di folder packages 
 ENV PYTHONPATH=/app/packages
 
 WORKDIR /app
 
-# Install curl 
 RUN apk add --no-cache curl
 
 # Security: Jalankan aplikasi sebagai user biasa 
@@ -39,7 +37,6 @@ COPY --from=builder /app/packages /app/packages
 
 COPY app.py .
 
-# --- INSTRUKSI HEALTHCHECK ---
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:${PORT}/health || exit 1
 
