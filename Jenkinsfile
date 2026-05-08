@@ -8,30 +8,17 @@ pipeline {
 
     stages {
 
-        stage('Clone Repository') {
+        stage('Checkout') {
             steps {
 
-                echo 'Cloning Repository...'
-
-                git branch: 'Modul-2',
-                    credentialsId: 'github',
-                    url: 'https://github.com/Sonar06/Modul-NCC.git'
-            }
-        }
-
-        stage('Build Docker') {
-            steps {
-
-                echo 'Building Docker Image...'
-
-                sh 'docker compose build'
+                echo 'Repository Ready'
             }
         }
 
         stage('PHP Syntax Test') {
             steps {
 
-                echo 'Running PHP Syntax Test...'
+                echo 'Checking PHP Syntax...'
 
                 sh 'find . -name "*.php" -exec php -l {} \\;'
             }
@@ -40,7 +27,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
 
-                echo 'Starting SonarQube Analysis...'
+                echo 'Running SonarQube Analysis...'
 
                 script {
 
@@ -69,18 +56,6 @@ pipeline {
                 timeout(time: 2, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-
-                echo 'Deploying Application...'
-
-                sh '''
-                docker compose down
-                docker compose up -d --build
-                '''
             }
         }
     }
