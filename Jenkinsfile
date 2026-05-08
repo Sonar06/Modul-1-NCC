@@ -11,9 +11,9 @@ pipeline {
             steps {
                 echo 'Cloning Repository...'
 
-                git branch: 'Modul-2',
+                git branch: '*/Modul-2',
                     credentialsId: 'github',
-                    url: 'https://github.com/Sonar06/Modul-NCC/tree/Modul-2.git'
+                    url: 'https://github.com/Sonar06/Modul-NCC.git'
             }
         }
 
@@ -72,7 +72,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo 'Deploying Application...'
-                
+
                 sh '''
                 docker compose down
                 docker compose up -d --build
