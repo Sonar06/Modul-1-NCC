@@ -1,5 +1,9 @@
 import pytest
 from app import nearest_neighbor, app
+import json
+
+with open('distance_matrix.json') as f:
+    distance_matrix = json.load(f)
 
 def test_nearest_neighbor_basic():
     start = 'Jakarta'
