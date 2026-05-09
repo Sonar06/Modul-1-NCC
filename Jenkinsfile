@@ -97,7 +97,7 @@ pipeline {
                 echo 'Deploy berhasil.'
             }
         }
-
+    }
     post {
 
         success {
