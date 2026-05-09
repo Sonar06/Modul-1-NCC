@@ -19,13 +19,6 @@
                         {% endfor %}
                     </select>
                     
-                    <label class="form-label fw-bold">Titik akhir (Tujuan):</label>
-                    <select id="endCity" class="form-select mb-3">
-                        {% for city in cities %}
-                        <option value="{{ city }}">{{ city }}</option>
-                        {% endfor %}
-                    </select>
-                    
                     <button onclick="calculate()" class="btn btn-primary w-100">Cek Rute Terpendek</button>
                 </div>
             </div>
@@ -43,24 +36,20 @@
     <script>
         async function calculate() {
             const start = document.getElementById('startCity').value;
-            const end = document.getElementById('endCity').value;
 
-            if (!start || !end) {
-                alert("Pilih titik awal dan akhir!");
+            if (!start) {
+                alert("Pilih titik awal!");
                 return;
             }
-            
+
             const response = await fetch('/calculate', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    start_city: start,
-                    end_city: end
-                })
+                body: JSON.stringify({start_city: start})
             });
-            
+
             const result = await response.json();
-            
+
             if (result.error) {
                 alert("Error: " + result.error);
             } else {
