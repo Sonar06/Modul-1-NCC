@@ -19,9 +19,6 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Build stage...'
-
-                //  build docker
-                sh 'docker build -t iniberita .'
             }
         }
 
@@ -75,9 +72,6 @@ pipeline {
             steps {
 
                 echo 'Deploying application...'
-
-                sh 'docker images'
-
                 echo 'Deploy berhasil.'
             }
         }
