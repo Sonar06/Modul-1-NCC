@@ -1,6 +1,5 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import json
-from datetime import datetime
 
 app = Flask(__name__)
 
@@ -8,7 +7,7 @@ app = Flask(__name__)
 with open('distance_matrix.json') as f:
     distance_matrix = json.load(f)
 
-# City coordinates (opsional, untuk visualisasi nanti)
+# Koordinat kota untuk node plotting
 city_coords = {
     'Jakarta': (0, 0),
     'Tangerang': (-10, 10),
@@ -64,7 +63,7 @@ city_coords = {
     'Banyuwangi': (870, 0)
 }
 
-# --- ALGORITMA NEAREST NEIGHBOR ---
+# Algoritma Nearest Neighbor
 def nearest_neighbor(start, destinations):
     route = [start]
     total_distance = 0
@@ -83,7 +82,12 @@ def nearest_neighbor(start, destinations):
     route.append(start)
     return route, total_distance
 
-# --- ROUTES ---
+# --- Routes ---
+@app.route('/')
+def index():
+    cities = list(distance_matrix.keys())
+    return render_template('index.html', cities=cities, coords=city_coords)
+
 @app.route('/health', methods=['GET'])
 def health_check():
     return jsonify({
