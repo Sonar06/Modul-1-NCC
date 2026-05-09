@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        // Poin Plus: Credential & Environment Management
         SONAR_TOKEN        = credentials('Sonarqube')
         SONAR_PROJECT_KEY  = 'iniberita'
         SONAR_PROJECT_NAME = 'iniberita'
@@ -20,16 +19,16 @@ pipeline {
         stage('Build') {
             steps {
                 echo '=== Stage 2: Kompilasi / build Docker Image ==='
-                // Menggunakan Dockerfile multi-stage yang kamu buat sebelumnya
-                sh 'docker build -t iniberita .'
+                // Paksa menggunakan socket lokal dengan mengosongkan DOCKER_HOST
+                sh 'export DOCKER_HOST=""; docker build -t iniberita .'
             }
         }
 
         stage('Test') {
             steps {
                 echo '=== Stage 3: Jalankan pengujian (Syntax Check) ==='
-                // Menjalankan test menggunakan container agar tidak butuh install PHP di Jenkins
-                sh 'docker run --rm -v $(pwd):/app -w /app php:8.2-cli php -l index.php'
+                // Paksa menggunakan socket lokal
+                sh 'export DOCKER_HOST=""; docker run --rm -v $(pwd):/app -w /app php:8.2-cli php -l index.php'
             }
         }
 
@@ -54,7 +53,6 @@ pipeline {
         stage('Quality Gate') {
             steps {
                 echo '=== Menunggu Standar Kualitas SonarQube ==='
-                // Poin Plus: Menggagalkan pipeline jika standar tidak terpenuhi
                 timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
@@ -65,11 +63,9 @@ pipeline {
             steps {
                 echo '=== Stage 5: Deployment ke Container Running ==='
                 sh '''
-                # Hentikan container lama jika ada
+                export DOCKER_HOST=""
                 docker stop iniberita || true
                 docker rm iniberita || true
-                
-                # Jalankan container baru di port 80
                 docker run -d --name iniberita -p 80:80 iniberita
                 '''
                 echo 'Deploy Berhasil! Silakan akses IP VPS kamu.'
@@ -78,15 +74,8 @@ pipeline {
     }
 
     post {
-        success {
-            echo 'Pipeline SUCCESS: Semua tahap dari Checkout hingga Deploy berhasil!'
-        }
-        failure {
-            echo 'Pipeline FAILED: Terjadi kesalahan pada salah satu stage.'
-        }
-        always {
-            echo 'Pembersihan Workspace...'
-            cleanWs()
-        }
+        success { echo 'Pipeline SUCCESS!' }
+        failure { echo 'Pipeline FAILED!' }
+        always { cleanWs() }
     }
 }
