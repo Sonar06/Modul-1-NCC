@@ -5,84 +5,100 @@ pipeline {
         SONAR_TOKEN        = credentials('Sonarqube')
         SONAR_PROJECT_KEY  = 'iniberita'
         SONAR_PROJECT_NAME = 'iniberita'
-        SCANNER_HOME       = tool 'Sonarqube' 
+        SCANNER_HOME       = tool 'Sonarqube'
     }
 
     stages {
+
         stage('Checkout') {
             steps {
-                echo '=== Stage 1: Ambil kode dari repository ==='
+                echo '=== Stage 1: Checkout Source Code ==='
                 checkout scm
             }
         }
 
         stage('Build') {
             steps {
-                echo '=== Stage 2: Kompilasi / build Docker Image ==='
-                // Paksa menggunakan socket lokal dengan mengosongkan DOCKER_HOST
-                sh 'export DOCKER_HOST=""; docker build -t iniberita .'
+                echo '=== Stage 2: Build Docker Image ==='
+
+                sh '''
+                docker build -t iniberita .
+                '''
             }
         }
 
         stage('Test') {
             steps {
-                echo '=== Stage 3: Jalankan pengujian (Syntax Check) ==='
-                // Paksa menggunakan socket lokal
-                sh 'export DOCKER_HOST=""; docker run --rm -v $(pwd):/app -w /app php:8.2-cli php -l index.php'
+                echo '=== Stage 3: Testing Application ==='
+
+                sh '''
+                docker run --rm iniberita php -l /var/www/html/index.php
+                '''
             }
         }
 
-        stage('Analyze') {
+        stage('SonarQube Analysis') {
             steps {
-                echo '=== Stage 4: Analisis SonarQube ==='
-                script {
-                    withSonarQubeEnv('Sonarqube_server') {
-                        sh """
-                        ${SCANNER_HOME}/bin/sonar-scanner \
-                          -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                          -Dsonar.projectName=${SONAR_PROJECT_NAME} \
-                          -Dsonar.sources=. \
-                          -Dsonar.host.url=http://70.153.136.203:9000 \
-                          -Dsonar.token=${SONAR_TOKEN}
-                        """
-                    }
+                echo '=== Stage 4: SonarQube Analysis ==='
+
+                withSonarQubeEnv('Sonarqube_server') {
+
+                    sh """
+                    ${SCANNER_HOME}/bin/sonar-scanner \
+                      -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                      -Dsonar.projectName=${SONAR_PROJECT_NAME} \
+                      -Dsonar.sources=. \
+                      -Dsonar.host.url=http://70.153.136.203:9000 \
+                      -Dsonar.token=${SONAR_TOKEN}
+                    """
                 }
             }
         }
 
         stage('Quality Gate') {
             steps {
-                echo '=== Menunggu Standar Kualitas SonarQube ==='
+
+                echo '=== Stage 5: Quality Gate ==='
+
                 timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
         }
 
-
         stage('Deploy') {
             steps {
 
-                sh '''
-                export DOCKER_HOST=""
+                echo '=== Stage 6: Deploy Container ==='
 
+                sh '''
                 docker stop iniberita || true
                 docker rm iniberita || true
 
-                docker run -d --name iniberita -p 80:80 iniberita
-
-                docker ps -a
-                docker logs iniberita || true
+                docker run -d \
+                  --name iniberita \
+                  -p 80:80 \
+                  iniberita
                 '''
+
+                echo 'Deployment berhasil!'
             }
         }
-
-
     }
 
     post {
-        success { echo 'Pipeline SUCCESS!' }
-        failure { echo 'Pipeline FAILED!' }
-        always { cleanWs() }
+
+        success {
+            echo 'Pipeline BERHASIL!'
+        }
+
+        failure {
+            echo 'Pipeline GAGAL!'
+        }
+
+        always {
+            echo 'Pipeline selesai'
+            cleanWs()
+        }
     }
 }
