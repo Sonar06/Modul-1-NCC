@@ -2,7 +2,7 @@
 $host = "mysql-db";
 $user = "root";
 $pass = "root";
-$db   = "newsdb";
+$db   = "iniberita";
 
 $conn = mysqli_connect($host, $user, $pass, $db);
 
