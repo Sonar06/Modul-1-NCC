@@ -74,7 +74,6 @@ pipeline {
         stage('Deploy') {
             when {
                 anyOf {
-                    branch 'main'
                     branch 'Modul-2'
                 }
             }
