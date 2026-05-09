@@ -1,8 +1,11 @@
 pipeline {
     agent any
+
     environment {
-        SONAR_TOKEN = credentials('Sonarqube')
+        SONARQUBE_ENV = 'Sonarqube'
+        SCANNER_HOME  = tool 'Sonarqube'
     }
+
     stages {
         stage('Checkout') {
             steps {
@@ -10,58 +13,67 @@ pipeline {
             }
         }
 
-        stage('Test & Coverage') {
+        stage('Setup Environment') {
             steps {
                 sh '''
                 python3 -m venv venv
                 source venv/bin/activate
                 pip install --upgrade pip
-                pip install -r requirements.txt pytest pytest-cov
-                pytest --cov=./ --cov-report=xml:reports/coverage.xml
+                pip install -r requirements.txt pytest pytest-cov flake8
                 '''
+            }
+        }
+
+        stage('Verification') {
+            parallel {
+                stage('Unit Tests & Coverage') {
+                    steps {
+                        sh '''
+                        source venv/bin/activate
+                        pytest --cov=. --cov-report=xml
+                        '''
+                    }
+                }
+                stage('Code Linting') {
+                    steps {
+                        sh '''
+                        source venv/bin/activate
+                        flake8 . --exit-zero
+                        '''
+                    }
+                }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                script {
-                    def scannerHome = tool 'Sonarqube'
-                    withSonarQubeEnv('Sonarqube_server') {
-                        sh """
-                        ${scannerHome}/bin/sonar-scanner \
-                          -Dsonar.projectKey=route-optimizer \
-                          -Dsonar.sources=. \
-                          -Dsonar.language=py \
-                          -Dsonar.python.version=3 \
-                          -Dsonar.python.coverage.reportPaths=reports/coverage.xml
-                        """
-                    }
+                withSonarQubeEnv('Sonarqube') {
+                    sh """
+                    ${SCANNER_HOME}/bin/sonar-scanner \
+                      -Dsonar.projectKey=ncc-health \
+                      -Dsonar.projectName=ncc-health \
+                      -Dsonar.sources=. \
+                      -Dsonar.python.coverage.reportPaths=coverage.xml
+                    """
                 }
             }
         }
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 3, unit: 'MINUTES') {
+                timeout(time: 10, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                sh '''
-                docker stop route-app || true
-                docker rm route-app || true
-                docker compose up -d --build --remove-orphans
-                '''
             }
         }
     }
 
     post {
-        always {
-            cleanWs()
+        success {
+            echo 'Pipeline Sukses! Check SonarQube for Code Quality.'
+        }
+        failure {
+            echo 'Pipeline Gagal!'
         }
     }
 }
