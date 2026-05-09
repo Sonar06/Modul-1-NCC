@@ -41,8 +41,4 @@ COPY --from=builder /app /var/www/html/
 # Permission
 RUN chown -R www-data:www-data /var/www/html
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost/health || exit 1
-
 EXPOSE 80
