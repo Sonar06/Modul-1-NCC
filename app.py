@@ -6,6 +6,73 @@ app = Flask(__name__)
 # Load distance matrix dari file JSON
 with open('distance_matrix.json') as f:
     distance_matrix = json.load(f)
+    
+city_coords = {
+    # Jawa Barat
+    'Jakarta': (0, 0),
+    'Tangerang': (-10, 10),
+    'Serang': (-80, 5),
+    'Bogor': (20, -50),
+    'Cianjur': (60, -50),
+    'Purwakarta': (70, -20),
+    'Bandung': (100, -50),
+    'Cirebon': (200, 10),
+    'Tasikmalaya': (150, -80),
+    
+    # Jawa Tengah (Barat/Tengah)
+    'Tegal': (280, 20),
+    'Pekalongan': (320, 20),
+    'Purwokerto': (300, -20),
+    'Banyumas': (305, -25),
+    'Purbalingga': (310, -30),
+    'Banjarnegara': (330, -35),
+    'Wonosobo': (360, -30),
+    'Temanggung': (370, -20),
+    'Kendal': (330, 20),
+    'Semarang': (350, 20),
+    'Magelang': (380, -25),
+    'Yogyakarta': (400, -30),
+    'Salatiga': (380, 0),
+    'Boyolali': (430, -10),
+    'Solo': (450, 10),
+    'Klaten': (420, -20),
+    'Sragen': (480, 15),
+    # Jawa Tengah (Pantura Timur)
+    'Demak': (370, 30),
+    'Kudus': (390, 35),
+    'Jepara': (395, 50),
+    'Pati': (410, 35),
+    
+    # Jawa Timur (Barat/Tengah)
+    'Ngawi': (510, 10),
+    'Madiun': (530, -10),
+    'Pacitan': (540, -90),
+    'Trenggalek': (580, -80),
+    'Tulungagung': (600, -70),
+    'Kediri': (590, -50),
+    'Blitar': (610, -75),
+    
+    # Jawa Timur (Area Surabaya)
+    'Tuban': (580, 40),
+    'Lamongan': (600, 45),
+    'Gresik': (610, 55),
+    'Surabaya': (600, 50),
+    'Sidoarjo': (605, 40),
+    'Mojokerto': (580, 30),
+    'Jombang': (570, 25),
+    
+    # Jawa Timur (Area Malang)
+    'Malang': (650, 0),
+    'Batu': (645, 5),
+    
+    # Jawa Timur (Timur/Tapal Kuda)
+    'Probolinggo': (710, 20),
+    'Lumajang': (720, -10),
+    'Jember': (770, -10),
+    'Bondowoso': (800, 10),
+    'Situbondo': (820, 25),
+    'Banyuwangi': (870, 0)
+}
 
 def nearest_neighbor(start, destinations):
     route = [start]
