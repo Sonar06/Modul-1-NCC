@@ -23,12 +23,11 @@ pipeline {
                 }
                 stage('PHP Syntax Test') {
                     steps {
-                        echo 'Running PHP Syntax Check...'
-                        /* 
-                           Catatan: Pastikan PHP terinstall di Jenkins atau 
-                           gunakan 'docker run' jika agent tidak punya PHP.
-                        */
-                        sh 'find . -name "*.php" -exec php -l {} +'
+                        echo 'Running PHP Syntax Check using Docker...'
+                        // Kita meminjam image php:8.2-cli untuk mengecek syntax
+                        sh 'docker run --rm -v $(pwd):/app -w /app php:8.2-cli php -l index.php' 
+                        // Atau jika ingin cek semua file:
+                        sh 'docker run --rm -v $(pwd):/app -w /app php:8.2-cli find . -name "*.php" -exec php -l {} +'
                     }
                 }
             }
