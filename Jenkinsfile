@@ -71,20 +71,32 @@ pipeline {
             }
         }
 
+ 
         stage('Deploy') {
+
             when {
-                anyOf {
-                    branch 'Modul-2'
-                }
+                branch 'Modul-2'
             }
+
             steps {
+
                 echo 'Deploying application...'
-                // Tambahkan perintah docker compose kamu di sini agar benar-benar jalan
-                sh 'docker compose down || true'
-                sh 'docker compose up -d --build'
+
+                sh 'docker build -t iniberita .'
+
+                sh '''
+                docker stop iniberita || true
+                docker rm iniberita || true
+
+                docker run -d \
+                --name iniberita \
+                -p 80:80 \
+                iniberita
+                '''
+
+                echo 'Deploy berhasil.'
             }
         }
-    }
 
     post {
 
