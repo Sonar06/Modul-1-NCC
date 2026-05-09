@@ -48,7 +48,7 @@ pipeline {
         stage('Deploy') {
             when {
                 // Hanya berjalan di branch Modul-2
-                branch 'Modul-2'
+                branch '*/Modul-2'
             }
             steps {
                 echo 'Deploying application to Docker...'
