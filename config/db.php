@@ -1,7 +1,7 @@
 <?php
-$host = "localhost";
+$host = "mysql-db";
 $user = "root";
-$pass = "";
+$pass = "root";
 $db   = "newsdb";
 
 $conn = mysqli_connect($host, $user, $pass, $db);
