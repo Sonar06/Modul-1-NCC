@@ -1,12 +1,8 @@
 pipeline {
     agent any
     
-    // Panggil instalasi yang sudah kamu buat di Global Tool Configuration
-    tools {
-        'org.sonarsource.scanner.jenkins.SonarQubeScannerInstaller' 'Sonarqube' 
-    }
-
     environment {
+        // Mengambil kredensial 'Sonarqube' dari Jenkins Credentials
         SONAR_TOKEN = credentials('Sonarqube')
     }
 
@@ -28,7 +24,6 @@ pipeline {
         stage('Python Lint/Test') {
             steps {
                 echo '=== Stage 3: Syntax Check ==='
-                // Menjalankan pengecekan syntax python di dalam container
                 sh 'docker run --rm route-app-image python -m py_compile app.py'
             }
         }
@@ -37,14 +32,18 @@ pipeline {
             steps {
                 echo '=== Stage 4: SonarQube Analysis ==='
                 script {
-                    // Jenkins akan mencari folder instalasi scannerHome secara otomatis
+                    // Mencari path instalasi scanner secara dinamis
                     def scannerHome = tool 'sonar-scanner'
+                    
                     withSonarQubeEnv('Sonarqube_server') {
-                        sh "${scannerHome}/bin/sonar-scanner \
+                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
                         -Dsonar.projectKey=route-optimizer \
+                        -Dsonar.projectName="Optimasi Rute Kurir" \
                         -Dsonar.sources=. \
                         -Dsonar.language=py \
-                        -Dsonar.python.version=3"
+                        -Dsonar.python.version=3
+                        """
                     }
                 }
             }
@@ -54,7 +53,6 @@ pipeline {
             steps {
                 echo '=== Stage 5: Quality Gate ==='
                 timeout(time: 3, unit: 'MINUTES') {
-                    // Pastikan webhook di SonarQube sudah mengarah ke IP-Jenkins/sonarqube-webhook/
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -71,19 +69,16 @@ pipeline {
         }
     }
 
-      post {
-
-        success {
-            echo 'Pipeline BERHASIL!'
-        }
-
-        failure {
-            echo 'Pipeline GAGAL!'
-        }
-
+    post {
         always {
-            echo 'Pipeline selesai'
+            echo 'Pipeline selesai, membersihkan workspace...'
             cleanWs()
+        }
+        success {
+            echo 'Pipeline BERHASIL! Aplikasi sudah running di port 80.'
+        }
+        failure {
+            echo 'Pipeline GAGAL! Periksa log pada stage yang merah.'
         }
     }
 }
