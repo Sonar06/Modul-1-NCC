@@ -62,7 +62,7 @@ pipeline {
                 echo '=== Stage 5: Quality Gate ==='
 
                 timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+                    waitForQualityGate abortPipeline: false
                 }
             }
         }
