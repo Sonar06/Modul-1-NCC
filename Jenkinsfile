@@ -1,34 +1,26 @@
 pipeline {
-    agent any  // Menjalankan pipeline di node yang tersedia
+    agent {
+        docker { image 'python:3.11-slim' } // pakai image Python siap pakai
+    }
 
     environment {
-        APP_ENV = 'staging'
         SONARQUBE_ENV = 'Sonarqube'
-        SCANNER_HOME = tool 'Sonarqube'
+        SCANNER_HOME  = tool 'Sonarqube'
     }
 
     stages {
         stage('Checkout') {
-            steps {
-                checkout scm
-            }
+            steps { checkout scm }
         }
 
         stage('Setup Environment') {
             steps {
-                // Gunakan Python image via Docker jika tersedia, atau pastikan Python terinstall di node
                 sh '''
-                python3 -m venv venv
+                python -m venv venv
                 . venv/bin/activate
                 pip install --upgrade pip
                 pip install -r requirements.txt pytest pytest-cov flake8
                 '''
-            }
-        }
-
-        stage('Build') {
-            steps {
-                echo 'Build step: untuk Python biasanya tidak ada kompilasi, bisa dilewati atau untuk pre-processing'
             }
         }
 
@@ -42,9 +34,9 @@ pipeline {
             }
         }
 
-        stage('Analyze') {
+        stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("${Sonarqube_server}") {
+                withSonarQubeEnv("${SONARQUBE_server}") {
                     sh """
                     ${SCANNER_HOME}/bin/sonar-scanner \
                       -Dsonar.projectKey=route-optimizer \
@@ -57,7 +49,6 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo 'Deploy step: bisa jalankan docker compose atau script deployment lain'
                 sh '''
                 docker stop route-app || true
                 docker rm route-app || true
@@ -72,11 +63,7 @@ pipeline {
             echo 'Pipeline selesai'
             cleanWs()
         }
-        success {
-            echo 'Pipeline berhasil!'
-        }
-        failure {
-            echo 'Pipeline gagal!'
-        }
+        success { echo 'Pipeline berhasil!' }
+        failure { echo 'Pipeline gagal!' }
     }
 }
