@@ -1,8 +1,8 @@
 <?php
-$host = "mysql-db";     // Sesuai container_name di docker-compose
+$host = "mysql"; 
 $user = "root";
-$pass = "rootpass";     // SESUAIKAN: tadi di docker-compose kamu pakai 'rootpass'
-$db   = "iniberita";    // SESUAIKAN: tadi di docker-compose kamu pakai 'iniberita'
+$pass = "rootpass"; 
+$db   = "iniberita";
 
 $conn = mysqli_connect($host, $user, $pass, $db);
 
