@@ -71,10 +71,10 @@ pipeline {
             steps {
                 echo '=== Stage 6: Deploy with Docker Compose ==='
                 sh '''
-                # Paksa hapus container lama yang mungkin nyangkut di port 80
-                docker rm -f berita-app iniberita || true
+                # Hapus semua kemungkinan container yang konflik nama/port
+                docker rm -f berita-app mysql service-vps-modul-ncc iniberita mysql-db || true
                 
-                # Bersihkan network/container sisa compose sebelumnya
+                # Turunkan compose lama jika ada
                 docker compose down --remove-orphans
                 
                 # Jalankan ulang
