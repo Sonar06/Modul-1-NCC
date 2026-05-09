@@ -36,7 +36,7 @@ pipeline {
                           -Dsonar.sources=. \
                           -Dsonar.language=py \
                           -Dsonar.python.version=3 \
-                          -Dsonar.python.coverage.reportPaths=coverage.xml
+                          -Dsonar.python.coverage.reportPaths=reports/coverage.xml
                         """
                     }
                 }
