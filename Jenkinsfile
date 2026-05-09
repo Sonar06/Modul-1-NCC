@@ -29,10 +29,11 @@ pipeline {
 
         stage('Test') {
             steps {
-                echo '=== Stage 3: Testing Application ==='
+                echo '=== Stage 3: Testing Application (Syntax Check) ==='
 
                 sh '''
-                docker run --rm iniberita php -l /var/www/html/index.php
+                # Kita jalankan pengecekan pada seluruh folder /var/www/html di dalam container
+                docker run --rm iniberita sh -c "find /var/www/html -name '*.php' -exec php -l {} \\;"
                 '''
             }
         }
