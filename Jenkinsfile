@@ -20,7 +20,7 @@ pipeline {
             steps {
                 echo 'Build stage...'
 
-                // contoh build docker
+                //  build docker
                 sh 'docker build -t iniberita .'
             }
         }
