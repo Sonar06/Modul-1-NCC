@@ -19,6 +19,9 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Build stage...'
+
+                // Optional build docker
+                // sh 'docker build -t iniberita .'
             }
         }
 
@@ -37,19 +40,22 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
 
-                def scannerHome = tool 'Sonarqube'
+                script {
 
-                withSonarQubeEnv('Sonarqube_server') {
+                    def scannerHome = tool 'Sonarqube'
 
-                    sh '''
-                    sonar-scanner \
-                      -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                      -Dsonar.projectName=${SONAR_PROJECT_NAME} \
-                      -Dsonar.sources=. \
-                      -Dsonar.host.url=http://70.153.136.203:9000 \
-                      -Dsonar.token=${SONAR_TOKEN} \
-                      -Dsonar.python.version=3
-                    '''
+                    withSonarQubeEnv('Sonarqube_server') {
+
+                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                          -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                          -Dsonar.projectName=${SONAR_PROJECT_NAME} \
+                          -Dsonar.sources=. \
+                          -Dsonar.host.url=http://70.153.136.203:9000 \
+                          -Dsonar.token=${SONAR_TOKEN} \
+                          -Dsonar.python.version=3
+                        """
+                    }
                 }
             }
         }
@@ -74,6 +80,7 @@ pipeline {
             steps {
 
                 echo 'Deploying application...'
+
                 echo 'Deploy berhasil.'
             }
         }
