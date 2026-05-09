@@ -2,7 +2,7 @@ pipeline {
     agent {
         docker {
             image 'python:3.11-slim'
-            args '-u root:root' // optional untuk izin root
+            args '-u root:root'  // optional agar bisa write ke workspace
         }
     }
 
@@ -22,7 +22,7 @@ pipeline {
             steps {
                 sh '''
                 python -m venv venv
-                source venv/bin/activate
+                . venv/bin/activate
                 pip install --upgrade pip
                 pip install -r requirements.txt pytest pytest-cov flake8
                 '''
@@ -34,7 +34,7 @@ pipeline {
                 stage('Unit Tests & Coverage') {
                     steps {
                         sh '''
-                        source venv/bin/activate
+                        . venv/bin/activate
                         pytest --cov=. --cov-report=xml
                         '''
                     }
@@ -42,7 +42,7 @@ pipeline {
                 stage('Code Linting') {
                     steps {
                         sh '''
-                        source venv/bin/activate
+                        . venv/bin/activate
                         flake8 . --exit-zero
                         '''
                     }
