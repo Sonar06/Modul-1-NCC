@@ -14,8 +14,10 @@ pipeline {
         }
 
         stage('Setup Environment') {
-            steps {
+            steps { 
                 sh '''
+                # Install Python & pip jika belum ada
+                apk add --no-cache python3 py3-pip || true
                 python3 -m venv venv
                 source venv/bin/activate
                 pip install --upgrade pip
