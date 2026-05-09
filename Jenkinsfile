@@ -1,24 +1,20 @@
 pipeline {
-
     agent any
 
     environment {
+        SONAR_TOKEN = credentials('sonar-token')
+    }
 
-        SONAR_TOKEN  = credentials('Sonarqube')
-        SCANNER_HOME = tool 'Sonarqube'
-
-        SONAR_SERVER = 'Sonarqube_server'
-        PROJECT_KEY  = 'iniberita'
+    tools {
+        // Sonar Scanner tool dari Jenkins
+        sonarScanner 'Sonarqube'
     }
 
     stages {
 
         stage('Checkout') {
-
             steps {
-
                 echo 'Checking out source code...'
-
                 checkout scm
             }
         }
@@ -27,42 +23,51 @@ pipeline {
             steps {
                 echo 'Running SonarQube Analysis...'
 
-                withSonarQubeEnv("${SONAR_SERVER}") {
-                    sh """
-                    ${SCANNER_HOME}/bin/sonar-scanner \
-                    -Dsonar.projectKey=${PROJECT_KEY} \
-                    -Dsonar.projectName=${PROJECT_KEY} \
+                withSonarQubeEnv('Sonarqube_server') {
+
+                    sh '''
+                    $SCANNER_HOME/bin/sonar-scanner \
+                    -Dsonar.projectKey=iniberita \
+                    -Dsonar.projectName=iniberita \
                     -Dsonar.sources=. \
-                    -Dsonar.token=${SONAR_TOKEN}
-                    """
+                    -Dsonar.token=$SONAR_TOKEN
+                    '''
                 }
             }
         }
 
         stage('Quality Gate') {
-
             steps {
-
                 echo 'Checking Quality Gate...'
 
-                timeout(time: 5, unit: 'MINUTES') {
-
+                timeout(time: 2, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying application...'
+
+                sh '''
+                docker compose up -d --build
+                '''
             }
         }
     }
 
     post {
+        always {
+            echo 'Pipeline selesai'
+        }
 
         success {
-
-            echo 'Pipeline SUCCESS'
+            echo 'Pipeline berhasil!'
         }
 
         failure {
-
-            echo 'Pipeline FAILED'
+            echo 'Pipeline gagal!'
         }
     }
 }
