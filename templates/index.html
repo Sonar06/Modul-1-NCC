@@ -19,8 +19,8 @@
                         {% endfor %}
                     </select>
                     
-                    <label class="form-label fw-bold">Tujuan:</label>
-                    <select id="targetCities" class="form-select mb-3" multiple>
+                    <label class="form-label fw-bold">Titik akhir (Tujuan):</label>
+                    <select id="endCity" class="form-select mb-3">
                         {% for city in cities %}
                         <option value="{{ city }}">{{ city }}</option>
                         {% endfor %}
@@ -43,11 +43,10 @@
     <script>
         async function calculate() {
             const start = document.getElementById('startCity').value;
-            const targetSelect = document.getElementById('targetCities');
-            const targets = Array.from(targetSelect.selectedOptions).map(option => option.value);
-            
-            if (targets.length === 0) {
-                alert("Pilih setidaknya satu tujuan!");
+            const end = document.getElementById('endCity').value;
+
+            if (!start || !end) {
+                alert("Pilih titik awal dan akhir!");
                 return;
             }
             
@@ -56,7 +55,7 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     start_city: start,
-                    selected_cities: targets
+                    end_city: end
                 })
             });
             
