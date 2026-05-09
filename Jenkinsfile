@@ -62,8 +62,12 @@ pipeline {
             steps {
                 echo '=== Stage 6: Deploy with Docker Compose ==='
                 sh '''
-                docker rm -f route-app || true
-                docker compose up -d --build
+                # Hentikan container lama jika ada
+                docker stop route-app || true
+                docker rm route-app || true
+                
+                # Jalankan compose dengan flag --remove-orphans untuk membersihkan container lain
+                docker compose up -d --build --remove-orphans
                 ''' 
             }
         }
