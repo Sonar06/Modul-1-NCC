@@ -1,14 +1,15 @@
 from flask import Flask, request, jsonify
 import json
+from datetime import datetime
 
 app = Flask(__name__)
 
 # Load distance matrix dari file JSON
 with open('distance_matrix.json') as f:
     distance_matrix = json.load(f)
-    
+
+# City coordinates (opsional, untuk visualisasi nanti)
 city_coords = {
-    # Jawa Barat
     'Jakarta': (0, 0),
     'Tangerang': (-10, 10),
     'Serang': (-80, 5),
@@ -18,8 +19,6 @@ city_coords = {
     'Bandung': (100, -50),
     'Cirebon': (200, 10),
     'Tasikmalaya': (150, -80),
-    
-    # Jawa Tengah (Barat/Tengah)
     'Tegal': (280, 20),
     'Pekalongan': (320, 20),
     'Purwokerto': (300, -20),
@@ -37,13 +36,10 @@ city_coords = {
     'Solo': (450, 10),
     'Klaten': (420, -20),
     'Sragen': (480, 15),
-    # Jawa Tengah (Pantura Timur)
     'Demak': (370, 30),
     'Kudus': (390, 35),
     'Jepara': (395, 50),
     'Pati': (410, 35),
-    
-    # Jawa Timur (Barat/Tengah)
     'Ngawi': (510, 10),
     'Madiun': (530, -10),
     'Pacitan': (540, -90),
@@ -51,8 +47,6 @@ city_coords = {
     'Tulungagung': (600, -70),
     'Kediri': (590, -50),
     'Blitar': (610, -75),
-    
-    # Jawa Timur (Area Surabaya)
     'Tuban': (580, 40),
     'Lamongan': (600, 45),
     'Gresik': (610, 55),
@@ -60,12 +54,8 @@ city_coords = {
     'Sidoarjo': (605, 40),
     'Mojokerto': (580, 30),
     'Jombang': (570, 25),
-    
-    # Jawa Timur (Area Malang)
     'Malang': (650, 0),
     'Batu': (645, 5),
-    
-    # Jawa Timur (Timur/Tapal Kuda)
     'Probolinggo': (710, 20),
     'Lumajang': (720, -10),
     'Jember': (770, -10),
@@ -74,6 +64,7 @@ city_coords = {
     'Banyuwangi': (870, 0)
 }
 
+# --- ALGORITMA NEAREST NEIGHBOR ---
 def nearest_neighbor(start, destinations):
     route = [start]
     total_distance = 0
@@ -92,9 +83,15 @@ def nearest_neighbor(start, destinations):
     route.append(start)
     return route, total_distance
 
-@app.route('/health')
-def health():
-    return jsonify({'status': 'UP'})
+# --- ROUTES ---
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({
+	"nama": "Khairan Cherokee Musthfoa",
+        "nrp": "5025241215",
+        "status": "UP",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }), 200
 
 @app.route('/calculate', methods=['POST'])
 def calculate():
@@ -106,6 +103,3 @@ def calculate():
 
     route, dist = nearest_neighbor(start, [end])
     return jsonify({'route': route, 'distance': dist})
-
-if __name__ == "__main__":
-    app.run(debug=True)
