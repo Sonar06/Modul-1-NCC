@@ -1,6 +1,11 @@
 pipeline {
     agent any
     
+    // Panggil instalasi yang sudah kamu buat di Global Tool Configuration
+    tools {
+        'org.sonarsource.scanner.jenkins.SonarQubeScannerInstaller' 'Sonarqube' 
+    }
+
     environment {
         SONAR_TOKEN = credentials('Sonarqube')
     }
@@ -31,24 +36,25 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 echo '=== Stage 4: SonarQube Analysis ==='
-                withSonarQubeEnv('Sonarqube_server') {
-                    sh """
-                    sonar-scanner \
-                    -Dsonar.projectKey=route-optimizer \
-                    -Dsonar.sources=. \
-                    -Dsonar.language=py \
-                    -Dsonar.python.version=3
-                    """
+                script {
+                    // Jenkins akan mencari folder instalasi scannerHome secara otomatis
+                    def scannerHome = tool 'sonar-scanner'
+                    withSonarQubeEnv('Sonarqube_server') {
+                        sh "${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=route-optimizer \
+                        -Dsonar.sources=. \
+                        -Dsonar.language=py \
+                        -Dsonar.python.version=3"
+                    }
                 }
             }
         }
 
         stage('Quality Gate') {
             steps {
-
                 echo '=== Stage 5: Quality Gate ==='
-
                 timeout(time: 3, unit: 'MINUTES') {
+                    // Pastikan webhook di SonarQube sudah mengarah ke IP-Jenkins/sonarqube-webhook/
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -56,7 +62,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo '=== Stage 5: Deploy with Docker Compose ==='
+                echo '=== Stage 6: Deploy with Docker Compose ==='
                 sh '''
                 docker rm -f route-app || true
                 docker compose up -d --build
