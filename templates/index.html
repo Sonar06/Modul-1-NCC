@@ -36,71 +36,101 @@
                     <h4>Hasil Optimasi:</h4>
                     <hr>
                     <div id="routeDisplay" class="mt-3"></div>
-                    <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+                    <p class="fs-5">Total Jarak: <strong id="distDisplay">0</strong> km</p>
+                    <div id="routeDisplay" class="mt-3"></div>
+
+                    <canvas id="routeCanvas" width="900" height="400" style="border:1px solid #ccc; margin-top:20px;"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
         <script>
-        // Koordinat kota dari backend (format sederhana)
-        const cityCoords = {{ city_coords|tojson }};
+            const cityCoords = {{ city_coords|tojson }};
 
-        // Inisialisasi peta Leaflet
-        const map = L.map('map').setView([0, 0], 5); // Zoom awal 5
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
+            const canvas = document.getElementById('routeCanvas');
+            const ctx = canvas.getContext('2d');
 
-        let routeLayer = null; // Untuk menyimpan rute sebelumnya
+            function drawRoute(route) {
+                // Bersihkan canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        async function calculate() {
-            const start = document.getElementById('startCity').value;
-            const end = document.getElementById('endCity').value;
+                // Hitung skala agar semua kota masuk canvas
+                const allX = Object.values(cityCoords).map(c => c[0]);
+                const allY = Object.values(cityCoords).map(c => c[1]);
+                const minX = Math.min(...allX), maxX = Math.max(...allX);
+                const minY = Math.min(...allY), maxY = Math.max(...allY);
 
-            if (!start || !end) {
-                alert("Pilih titik awal dan akhir!");
-                return;
+                const scaleX = canvas.width / (maxX - minX + 20);
+                const scaleY = canvas.height / (maxY - minY + 20);
+
+                // Fungsi konversi koordinat ke canvas
+                const toCanvas = ([x, y]) => [
+                    (x - minX) * scaleX + 10,
+                    canvas.height - ((y - minY) * scaleY + 10) // invert Y
+                ];
+
+                // Gambar nodes semua kota
+                for (const [city, coord] of Object.entries(cityCoords)) {
+                    const [cx, cy] = toCanvas(coord);
+                    ctx.fillStyle = 'blue';
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 5, 0, 2*Math.PI);
+                    ctx.fill();
+                    ctx.font = '12px Arial';
+                    ctx.fillText(city, cx + 6, cy - 6);
+                }
+
+                // Gambar rute
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                route.forEach((city, idx) => {
+                    const [x, y] = toCanvas(cityCoords[city]);
+                    if (idx === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+
+                // Titik awal dan akhir beda warna
+                const [startX, startY] = toCanvas(cityCoords[route[0]]);
+                const [endX, endY] = toCanvas(cityCoords[route[route.length-1]]);
+                ctx.fillStyle = 'green';
+                ctx.beginPath(); ctx.arc(startX, startY, 6, 0, 2*Math.PI); ctx.fill();
+                ctx.fillStyle = 'orange';
+                ctx.beginPath(); ctx.arc(endX, endY, 6, 0, 2*Math.PI); ctx.fill();
             }
-            
-            const response = await fetch('/calculate', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    start_city: start,
-                    end_city: end
-                })
-            });
-            
-            const result = await response.json();
-            
-            if (result.error) {
-                alert("Error: " + result.error);
-            } else {
-                document.getElementById('distDisplay').innerText = result.distance;
-                document.getElementById('routeDisplay').innerHTML = 
-                    result.route.map((city, i) => `<span>${i+1}. ${city}</span>`).join('<br> ➡️ ');
 
-                // Buat rute di peta
-                const latlngs = result.route.map(city => {
-                    const c = cityCoords[city];
-                    return [c[1], c[0]]; // Leaflet pakai [lat, lng]
+            async function calculate() {
+                const start = document.getElementById('startCity').value;
+                const end = document.getElementById('endCity').value;
+
+                if (!start || !end) {
+                    alert("Pilih titik awal dan akhir!");
+                    return;
+                }
+
+                const response = await fetch('/calculate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        start_city: start,
+                        end_city: end
+                    })
                 });
 
-                // Hapus layer lama
-                if (routeLayer) map.removeLayer(routeLayer);
+                const result = await response.json();
 
-                routeLayer = L.polyline(latlngs, {color: 'red', weight: 5}).addTo(map);
+                if (result.error) {
+                    alert("Error: " + result.error);
+                } else {
+                    document.getElementById('distDisplay').innerText = result.distance;
+                    document.getElementById('routeDisplay').innerHTML =
+                        result.route.map((city, i) => `<span>${i+1}. ${city}</span>`).join('<br> ➡️ ');
 
-                // Zoom agar seluruh rute terlihat
-                map.fitBounds(routeLayer.getBounds());
-
-                // Tambahkan marker untuk tiap kota
-                latlngs.forEach((latlng, idx) => {
-                    L.marker(latlng).addTo(map).bindPopup(result.route[idx]);
-                });
+                    drawRoute(result.route);
+                }
             }
-        }
-    </script>
+        </script>
 </body>
 </html>
