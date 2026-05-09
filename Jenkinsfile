@@ -30,7 +30,7 @@ pipeline {
                 stage('PHP Lint') {
                     steps {
                         echo 'Checking PHP Syntax...'
-                        sh 'find . -name "*.php" -exec php -l {} \;'
+                        sh 'find . -name "*.php" -exec php -l {} \\;'
                     }
                 }
             }
