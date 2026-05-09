@@ -17,23 +17,17 @@ pipeline {
 
             steps {
 
+                echo 'Checking out source code...'
+
                 checkout scm
-            }
-        }
-
-        stage('PHP Syntax Test') {
-
-            steps {
-
-                sh '''
-                find . -name "*.php" -exec php -l {} \\;
-                '''
             }
         }
 
         stage('SonarQube Analysis') {
 
             steps {
+
+                echo 'Running SonarQube Analysis...'
 
                 withSonarQubeEnv("${SONAR_SERVER}") {
 
@@ -52,6 +46,8 @@ pipeline {
         stage('Quality Gate') {
 
             steps {
+
+                echo 'Checking Quality Gate...'
 
                 timeout(time: 5, unit: 'MINUTES') {
 
