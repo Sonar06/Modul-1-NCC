@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimasi Rute Kurir</title>
+    <!-- Memanggil CSS dari folder static -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Opsional: Tambahkan Bootstrap untuk layout cepat -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h2>🚚 Optimasi Rute Pengiriman</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <label>Kota Awal:</label>
+                <select id="startCity" class="form-select">
+                    {% for city in cities %}
+                    <option value="{{ city }}">{{ city }}</option>
+                    {% endfor %}
+                </select>
+                <!-- Tambahkan multiselect untuk kota tujuan -->
+                <button onclick="calculateRoute()" class="btn btn-primary mt-3">Hitung Rute</button>
+            </div>
+            <div class="col-md-8">
+                <h4>Hasil: <span id="totalDistance">0</span> km</h4>
+                <div id="routeOrder" class="list-group"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function calculateRoute() {
+            // Logika JavaScript Fetch API untuk memanggil /calculate
+        }
+    </script>
+</body>
+</html>

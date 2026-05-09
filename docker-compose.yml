@@ -1,0 +1,13 @@
+services:
+  route-optimizer:
+    build: .
+    container_name: route-app
+    ports:
+      - "80:5000"  # Mapping port 80 VPS ke port 5000 Flask
+    networks:
+      - ncc-network
+    restart: always
+
+networks:
+  ncc-network:
+    driver: bridge
