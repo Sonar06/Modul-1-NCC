@@ -19,8 +19,12 @@
                         {% endfor %}
                     </select>
                     
-                    <label class="form-label fw-bold">Tujuan (Contoh):</label>
-                    <div class="alert alert-info small">Bandung, Semarang, Surabaya</div>
+                    <label class="form-label fw-bold">Tujuan:</label>
+                    <select id="targetCities" class="form-select mb-3" multiple>
+                        {% for city in cities %}
+                        <option value="{{ city }}">{{ city }}</option>
+                        {% endfor %}
+                    </select>
                     
                     <button onclick="calculate()" class="btn btn-primary w-100">Cek Rute Terpendek</button>
                 </div>
@@ -39,8 +43,13 @@
     <script>
         async function calculate() {
             const start = document.getElementById('startCity').value;
-            // Kita gunakan contoh tujuan statis agar simpel
-            const targets = ['Bandung', 'Semarang', 'Surabaya'];
+            const targetSelect = document.getElementById('targetCities');
+            const targets = Array.from(targetSelect.selectedOptions).map(option => option.value);
+            
+            if (targets.length === 0) {
+                alert("Pilih setidaknya satu tujuan!");
+                return;
+            }
             
             const response = await fetch('/calculate', {
                 method: 'POST',

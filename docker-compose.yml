@@ -1,13 +1,15 @@
 services:
-  route-optimizer:
+  route-app:
     build: .
     container_name: route-app
     ports:
-      - "80:5000"  # Mapping port 80 VPS ke port 5000 Flask
-    networks:
-      - ncc-network
+      - "80:5000"    # Akses Publik Utama
+      - "3000:5000"  # Akses Khusus Health Check
     restart: always
-
-networks:
-  ncc-network:
-    driver: bridge
+    healthcheck:
+      # Cek kesehatan menggunakan python native karena image slim tidak ada curl
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health').getcode()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
