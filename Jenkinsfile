@@ -10,17 +10,14 @@ pipeline {
             }
         }
 
-        stage('Build Image') {
-            steps {
-                sh 'docker build -t route-app-image .'
-            }
-        }
-
-        stage('Run Tests') {
+        stage('Test & Coverage') {
             steps {
                 sh '''
-                docker run --rm -v $PWD:/app -w /app route-app-image \
-                sh -c "pip install --user -r requirements.txt && pytest --junitxml=reports/test-results.xml --cov=. --cov-report=xml"
+                python3 -m venv venv
+                source venv/bin/activate
+                pip install --upgrade pip
+                pip install -r requirements.txt pytest pytest-cov
+                pytest --cov=./ --cov-report=xml:reports/coverage.xml
                 '''
             }
         }
