@@ -24,21 +24,17 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
-
             steps {
-
                 echo 'Running SonarQube Analysis...'
 
                 withSonarQubeEnv("${SONAR_SERVER}") {
-
-                    sh '''
+                    sh """
                     ${SCANNER_HOME}/bin/sonar-scanner \
                     -Dsonar.projectKey=${PROJECT_KEY} \
                     -Dsonar.projectName=${PROJECT_KEY} \
                     -Dsonar.sources=. \
-                    -Dsonar.host.url=http://70.153.136.203:9000 \
-                    -Dsonar.token=$SONAR_TOKEN
-                    '''
+                    -Dsonar.token=${SONAR_TOKEN}
+                    """
                 }
             }
         }
