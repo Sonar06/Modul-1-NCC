@@ -72,16 +72,17 @@ pipeline {
         }
 
         stage('Deploy') {
-
             when {
-                branch 'main'
+                anyOf {
+                    branch 'main'
+                    branch 'Modul-2'
+                }
             }
-
             steps {
-
                 echo 'Deploying application...'
-
-                echo 'Deploy berhasil.'
+                // Tambahkan perintah docker compose kamu di sini agar benar-benar jalan
+                sh 'docker compose down || true'
+                sh 'docker compose up -d --build'
             }
         }
     }
