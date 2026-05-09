@@ -71,10 +71,16 @@ pipeline {
             steps {
                 echo '=== Stage 6: Deploy with Docker Compose ==='
                 sh '''
-                # Gunakan docker compose untuk build dan up sekaligus
+                # Paksa hapus container lama yang mungkin nyangkut di port 80
+                docker rm -f berita-app iniberita || true
+                
+                # Bersihkan network/container sisa compose sebelumnya
+                docker compose down --remove-orphans
+                
+                # Jalankan ulang
                 docker compose up -d --build
                 '''
-                echo 'Deployment berhasil! Web dapat diakses di port 80.'
+                echo 'Deployment berhasil!'
             }
         }
     }
