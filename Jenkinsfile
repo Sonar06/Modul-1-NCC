@@ -2,12 +2,9 @@ pipeline {
     agent any
 
     environment {
-        SONAR_TOKEN = credentials('Sonarqube')
-    }
-
-    tools {
-        // Sonar Scanner tool dari Jenkins
-        sonarScanner 'Sonarqube'
+        SONAR_TOKEN        = credentials('Sonarqube')
+        SONAR_PROJECT_KEY  = 'iniberita'
+        SONAR_PROJECT_NAME = 'iniberita'
     }
 
     stages {
@@ -19,18 +16,40 @@ pipeline {
             }
         }
 
+        stage('Build') {
+            steps {
+                echo 'Build stage...'
+
+                // contoh build docker
+                sh 'docker build -t iniberita .'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                echo 'Running tests...'
+
+                sh '''
+                if [ -f requirements.txt ]; then
+                    pip install -r requirements.txt
+                fi
+                '''
+            }
+        }
+
         stage('SonarQube Analysis') {
             steps {
-                echo 'Running SonarQube Analysis...'
 
                 withSonarQubeEnv('Sonarqube_server') {
 
                     sh '''
-                    $SCANNER_HOME/bin/sonar-scanner \
-                    -Dsonar.projectKey=iniberita \
-                    -Dsonar.projectName=iniberita \
-                    -Dsonar.sources=. \
-                    -Dsonar.token=$SONAR_TOKEN
+                    sonar-scanner \
+                      -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                      -Dsonar.projectName=${SONAR_PROJECT_NAME} \
+                      -Dsonar.sources=. \
+                      -Dsonar.host.url=http://70.153.136.203:9000 \
+                      -Dsonar.token=${SONAR_TOKEN} \
+                      -Dsonar.python.version=3
                     '''
                 }
             }
@@ -38,6 +57,7 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
+
                 echo 'Checking Quality Gate...'
 
                 timeout(time: 2, unit: 'MINUTES') {
@@ -47,20 +67,23 @@ pipeline {
         }
 
         stage('Deploy') {
+
+            when {
+                branch 'main'
+            }
+
             steps {
+
                 echo 'Deploying application...'
 
-                sh '''
-                docker compose up -d --build
-                '''
+                sh 'docker images'
+
+                echo 'Deploy berhasil.'
             }
         }
     }
 
     post {
-        always {
-            echo 'Pipeline selesai'
-        }
 
         success {
             echo 'Pipeline berhasil!'
@@ -68,6 +91,11 @@ pipeline {
 
         failure {
             echo 'Pipeline gagal!'
+        }
+
+        always {
+            echo 'Pipeline selesai'
+            cleanWs()
         }
     }
 }
