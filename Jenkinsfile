@@ -33,7 +33,7 @@ pipeline {
                 echo '=== Stage 4: SonarQube Analysis ==='
                 script {
                     // Mencari path instalasi scanner secara dinamis
-                    def scannerHome = tool 'sonar-scanner'
+                    def scannerHome = tool 'Sonarqube'
                     
                     withSonarQubeEnv('Sonarqube_server') {
                         sh """
