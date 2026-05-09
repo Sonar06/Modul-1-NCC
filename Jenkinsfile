@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.11-slim'
+            args '-u root:root' // optional untuk izin root
+        }
+    }
 
     environment {
         SONARQUBE_ENV = 'Sonarqube'
@@ -14,11 +19,9 @@ pipeline {
         }
 
         stage('Setup Environment') {
-            steps { 
+            steps {
                 sh '''
-                # Install Python & pip jika belum ada
-                apk add --no-cache python3 py3-pip || true
-                python3 -m venv venv
+                python -m venv venv
                 source venv/bin/activate
                 pip install --upgrade pip
                 pip install -r requirements.txt pytest pytest-cov flake8
@@ -49,7 +52,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('Sonarqube') {
+                withSonarQubeEnv("${SONARQUBE_ENV}") {
                     sh """
                     ${SCANNER_HOME}/bin/sonar-scanner \
                       -Dsonar.projectKey=ncc-health \
