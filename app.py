@@ -162,7 +162,8 @@ def health_check():
 
 @app.route('/')
 def index():
-    return render_template('index.html', cities=cities)
+    """Halaman utama"""
+    return render_template('index.html', cities=cities, city_coords=city_coords)
 
 @app.route('/calculate', methods=['POST'])
 def calculate():
