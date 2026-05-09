@@ -43,14 +43,41 @@ pipeline {
             }
         }
 
+        stage('Quality Gate') {
+            steps {
+
+                echo '=== Stage 5: Quality Gate ==='
+
+                timeout(time: 3, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
         stage('Deploy') {
             steps {
                 echo '=== Stage 5: Deploy with Docker Compose ==='
                 sh '''
                 docker rm -f route-app || true
                 docker compose up -d --build
-                '''
+                ''' 
             }
+        }
+    }
+
+      post {
+
+        success {
+            echo 'Pipeline BERHASIL!'
+        }
+
+        failure {
+            echo 'Pipeline GAGAL!'
+        }
+
+        always {
+            echo 'Pipeline selesai'
+            cleanWs()
         }
     }
 }
