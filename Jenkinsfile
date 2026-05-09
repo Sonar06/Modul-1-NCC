@@ -17,8 +17,6 @@ pipeline {
 
             steps {
 
-                echo 'Checking out source code...'
-
                 checkout scm
             }
         }
@@ -26,8 +24,6 @@ pipeline {
         stage('PHP Syntax Test') {
 
             steps {
-
-                echo 'Running PHP Syntax Check...'
 
                 sh '''
                 find . -name "*.php" -exec php -l {} \\;
@@ -39,18 +35,16 @@ pipeline {
 
             steps {
 
-                echo 'Starting SonarQube Analysis...'
-
                 withSonarQubeEnv("${SONAR_SERVER}") {
 
-                    sh """
+                    sh '''
                     ${SCANNER_HOME}/bin/sonar-scanner \
                     -Dsonar.projectKey=${PROJECT_KEY} \
                     -Dsonar.projectName=${PROJECT_KEY} \
                     -Dsonar.sources=. \
                     -Dsonar.host.url=http://20.196.72.213:9000 \
-                    -Dsonar.login=${SONAR_TOKEN}
-                    """
+                    -Dsonar.token=$SONAR_TOKEN
+                    '''
                 }
             }
         }
@@ -58,8 +52,6 @@ pipeline {
         stage('Quality Gate') {
 
             steps {
-
-                echo 'Waiting for Quality Gate...'
 
                 timeout(time: 5, unit: 'MINUTES') {
 
