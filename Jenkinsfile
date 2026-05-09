@@ -69,20 +69,12 @@ pipeline {
 
         stage('Deploy') {
             steps {
-
-                echo '=== Stage 6: Deploy Container ==='
-
+                echo '=== Stage 6: Deploy with Docker Compose ==='
                 sh '''
-                docker stop iniberita || true
-                docker rm iniberita || true
-
-                docker run -d \
-                  --name iniberita \
-                  -p 80:80 \
-                  iniberita
+                # Gunakan docker compose untuk build dan up sekaligus
+                docker compose up -d --build
                 '''
-
-                echo 'Deployment berhasil!'
+                echo 'Deployment berhasil! Web dapat diakses di port 80.'
             }
         }
     }
