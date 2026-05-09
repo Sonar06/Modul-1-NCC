@@ -72,8 +72,18 @@ def calculate():
     try:
         data = request.get_json()
         start = data.get('start_city')
-        selected = data.get('selected_cities', [])
-        route, dist = nearest_neighbor(start, selected)
+        end = data.get('end_city')
+        
+        if start not in distance_matrix or end not in distance_matrix:
+            return jsonify({'error': 'Kota tidak valid'}), 400
+
+        # Hitung jarak langsung dari start ke end
+        dist = distance_matrix[start].get(end, None)
+        if dist is None:
+            return jsonify({'error': f'Jarak dari {start} ke {end} tidak ditemukan'}), 400
+        
+        route = [start, end]
+
         return jsonify({'route': route, 'distance': dist})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
