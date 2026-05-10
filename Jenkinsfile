@@ -61,7 +61,7 @@ pipeline {
                     /opt/sonar-scanner/bin/sonar-scanner \
                       -Dsonar.projectKey=route-optimizer \
                       -Dsonar.sources=. \
-                      -Dsonar.exclusions=venv/** \
+                      -Dsonar.exclusions=venv/** \  
                       -Dsonar.python.coverage.reportPaths=reports/coverage.xml
                     '''
                 }
@@ -76,6 +76,16 @@ pipeline {
             }
         }
     }
+
+        stage('Deploy') {
+            steps {
+                echo 'Mendeploy aplikasi ke VPS...'
+                sh '''
+                docker compose down || true
+                docker compose up -d --build
+                '''
+            }
+        }
 
     post {
         always   { 
