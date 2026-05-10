@@ -20,13 +20,20 @@ pipeline {
         stage('Setup Environment') {
             steps {
                 sh '''
+                # Update dan install dependencies untuk download/unzip
+                apt-get update
+                apt-get install -y wget unzip
+
+                # Upgrade pip dan install requirements proyek
                 pip install --upgrade pip
                 pip install -r requirements.txt pytest pytest-cov flake8
-                # Install sonar-scanner secara manual di dalam container
-                apt-get update && apt-get install -null -y wget unzip
-                wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
-                unzip sonar-scanner-cli-5.0.1.3006-linux.zip
-                mv sonar-scanner-5.0.1.3006-linux /opt/sonar-scanner
+
+                # Download dan Setup Sonar Scanner jika belum ada
+                if [ ! -d "/opt/sonar-scanner" ]; then
+                    wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+                    unzip sonar-scanner-cli-5.0.1.3006-linux.zip
+                    mv sonar-scanner-5.0.1.3006-linux /opt/sonar-scanner
+                fi
                 '''
             }
         }
