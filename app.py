@@ -1,5 +1,5 @@
-from flask import Flask, request, jsonify, render_template
-import json
+from  flask import Flask, request, jsonify, render_template
+import json, os
 from datetime import datetime
 
 app = Flask(__name__)
@@ -110,4 +110,7 @@ def calculate():
     return jsonify({'route': route, 'distance': dist})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    # Ambil host dari env, kalau tidak ada default ke 127.0.0.1 (aman menurut Sonar)
+    host = os.getenv('FLASK_RUN_HOST', '127.0.0.1')
+    port = int(os.getenv('FLASK_RUN_PORT', 5000))
+    app.run(host=host, port=port)
