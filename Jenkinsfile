@@ -17,26 +17,6 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
-            steps {
-                sh '''
-                # Ini langkah minimal install Docker CLI di Debian (slim)
-                apt-get update && apt-get install -y ca-certificates curl gnupg
-                install -m 0755 -d /etc/apt/keyrings
-                curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-                chmod a+r /etc/apt/keyrings/docker.gpg
-
-                echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-                
-                apt-get update && apt-get install -y docker-ce-cli docker-compose-plugin
-
-                # Baru jalankan deploy
-                docker compose down || true
-                docker compose up -d --build
-                '''
-            }
-        }
-
         stage('Test') {
             parallel {
                 stage('Unit Tests & Coverage') {
@@ -77,9 +57,18 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo 'Mendeploy aplikasi ke VPS...'
-                // Docker compose dijalankan di level host (luar agent docker)
                 sh '''
+                # Ini langkah minimal install Docker CLI di Debian (slim)
+                apt-get update && apt-get install -y ca-certificates curl gnupg
+                install -m 0755 -d /etc/apt/keyrings
+                curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+                chmod a+r /etc/apt/keyrings/docker.gpg
+
+                echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+                
+                apt-get update && apt-get install -y docker-ce-cli docker-compose-plugin
+
+                # Baru jalankan deploy
                 docker compose down || true
                 docker compose up -d --build
                 '''
