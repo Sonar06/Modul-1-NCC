@@ -62,10 +62,13 @@ def health_check():
 def calculate():
     data = request.get_json()
     start = data.get('start_city')
-    end = data.get('end_city')
-    if not start or not end:
-        return jsonify({'error': 'Pilih kota asal dan tujuan!'}), 400
-    route, dist = nearest_neighbor(start, [end])
+    destinations = data.get('destinations') # Ini sekarang berupa List
+
+    if not start or not destinations:
+        return jsonify({'error': 'Data tidak lengkap!'}), 400
+
+    route, dist = nearest_neighbor(start, destinations)
+    
     return jsonify({'route': route, 'distance': dist})
 
 if __name__ == '__main__':
