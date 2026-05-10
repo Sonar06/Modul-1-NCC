@@ -46,7 +46,7 @@ def nearest_neighbor(start, destinations):
 
 @app.route('/', methods=['GET'])
 def index():
-    cities = sorted(list(distance_matrix.keys()))
+    cities = sorted(distance_matrix.keys())
     return render_template('index.html', cities=cities, coords=city_coords)
 
 @app.route('/health', methods=['GET'])
