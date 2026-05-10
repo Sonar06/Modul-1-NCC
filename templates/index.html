@@ -19,22 +19,22 @@
             <div class="col-md-4">
                 <div class="card shadow-sm p-3">
                     <label for="startCity" class="form-label fw-bold">Titik Awal (Depot):</label>
-                    <select id="startCity" class="form-select mb-3">
-                        {% for city in cities %}
-                        <option value="{{ city }}">{{ city }}</option>
-                        {% endfor %}
-                    </select>
-                    
-                    <label class="form-label fw-bold">Pilih Kota Tujuan:</label>
-                    <div class="input-group mb-3">
-                        <select id="cityPicker" class="form-select">
-                            <option value="" disabled selected>Pilih kota...</option>
+                        <select id="startCity" class="form-select mb-3">
                             {% for city in cities %}
                             <option value="{{ city }}">{{ city }}</option>
                             {% endfor %}
                         </select>
-                        <button class="btn btn-outline-secondary" type="button" id="addCityBtn">➕ Tambah</button>
-                    </div>
+
+                        <label for="cityPicker" class="form-label fw-bold">Pilih Kota Tujuan:</label>
+                        <div class="input-group mb-3">
+                            <select id="cityPicker" class="form-select">
+                                <option value="" disabled selected>Pilih kota...</option>
+                                {% for city in cities %}
+                                <option value="{{ city }}">{{ city }}</option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn btn-outline-secondary" type="button" id="addCityBtn">➕ Tambah</button>
+                        </div>
 
                     <div id="selectedCitiesList" class="mb-3 border p-2 rounded bg-white" style="min-height: 50px;">
                         <p class="text-muted small mb-0">Belum ada kota dipilih...</p>
