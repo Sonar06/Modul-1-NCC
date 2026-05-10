@@ -1,13 +1,48 @@
+let selectedDestinations = [];
 const graph = document.getElementById('routeGraph');
+const listContainer = document.getElementById('selectedCitiesList');
 
+// Fungsi untuk menambah kota ke daftar
+document.getElementById('addCityBtn').addEventListener('click', () => {
+    const city = document.getElementById('cityPicker').value;
+    if (city && !selectedDestinations.includes(city)) {
+        selectedDestinations.push(city);
+        renderList();
+    }
+});
+
+// Fungsi untuk merender tampilan daftar kota
+function renderList() {
+    if (selectedDestinations.length === 0) {
+        listContainer.innerHTML = '<p class="text-muted small mb-0">Belum ada kota dipilih...</p>';
+        return;
+    }
+    listContainer.innerHTML = selectedDestinations.map((city, index) => `
+        <span class="badge bg-secondary m-1 p-2">
+            ${city} 
+            <button type="button" class="btn-close btn-close-white" style="font-size: 0.5rem" onclick="removeCity(${index})"></button>
+        </span>
+    `).join('');
+}
+
+// Fungsi hapus satu kota
+window.removeCity = (index) => {
+    selectedDestinations.splice(index, 1);
+    renderList();
+};
+
+// Reset semua
+document.getElementById('clearBtn').addEventListener('click', () => {
+    selectedDestinations = [];
+    renderList();
+    graph.innerHTML = '';
+});
+
+// Kirim ke Backend
 document.getElementById('calculateBtn').addEventListener('click', async () => {
     const start = document.getElementById('startCity').value;
-    const endSelect = document.getElementById('endCity');
-    
-    // Mengambil semua nilai yang dipilih dari select multiple
-    const destinations = Array.from(endSelect.selectedOptions).map(option => option.value);
 
-    if (!start || destinations.length === 0) {
+    if (!start || selectedDestinations.length === 0) {
         alert("Pilih titik awal dan minimal satu tujuan!");
         return;
     }
@@ -15,22 +50,21 @@ document.getElementById('calculateBtn').addEventListener('click', async () => {
     const response = await fetch('/calculate', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        // Mengirim array destinations, bukan string end_city tunggal
-        body: JSON.stringify({ start_city: start, destinations: destinations })
+        body: JSON.stringify({ start_city: start, destinations: selectedDestinations })
     });
 
     const result = await response.json();
 
     if (result.error) {
-        alert("Error: " + result.error);
+        alert(result.error);
     } else {
         document.getElementById('distDisplay').innerText = result.distance;
-        document.getElementById('routeDisplay').innerHTML = 
-            result.route.map((city, i) => `<span class="badge bg-info text-dark m-1">${i+1}. ${city}</span>`).join(' ➡️ ');
-
+        document.getElementById('routeDisplay').innerHTML = result.route.join(' ➡️ ');
         drawGraph(result.route);
     }
 });
+
+// Fungsi drawGraph tetap sama menggunakan cityCoords...
 
 // Fungsi drawGraph tetap sama seperti sebelumnya
 function drawGraph(route) {

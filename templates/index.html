@@ -25,15 +25,23 @@
                         {% endfor %}
                     </select>
                     
-                    <label for="endCity" class="form-label fw-bold">Pilih Kota Tujuan:</label>
-                    <p class="small text-muted mb-2">(Tahan Ctrl/Cmd untuk pilih > 1 kota)</p>
-                    <select id="endCity" class="form-select mb-3" multiple>
-                        {% for city in cities %}
-                        <option value="{{ city }}">{{ city }}</option>
-                        {% endfor %}
-                    </select>
+                    <label class="form-label fw-bold">Pilih Kota Tujuan:</label>
+                    <div class="input-group mb-3">
+                        <select id="cityPicker" class="form-select">
+                            <option value="" disabled selected>Pilih kota...</option>
+                            {% for city in cities %}
+                            <option value="{{ city }}">{{ city }}</option>
+                            {% endfor %}
+                        </select>
+                        <button class="btn btn-outline-secondary" type="button" id="addCityBtn">➕ Tambah</button>
+                    </div>
+
+                    <div id="selectedCitiesList" class="mb-3 border p-2 rounded bg-white" style="min-height: 50px;">
+                        <p class="text-muted small mb-0">Belum ada kota dipilih...</p>
+                    </div>
                     
-                    <button id="calculateBtn" class="btn btn-primary w-100">Cek Rute Terpendek</button>
+                    <button id="calculateBtn" class="btn btn-primary w-100">🚀 Cek Rute Terpendek</button>
+                    <button id="clearBtn" class="btn btn-sm btn-link text-danger w-100 mt-2">Hapus Semua</button>
                 </div>
             </div>
             <div class="col-md-8">
