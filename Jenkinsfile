@@ -78,8 +78,15 @@ pipeline {
     }
 
     post {
-        always   { cleanWs() }
-        success  { echo 'Pipeline sukses! Periksa SonarQube.' }
-        failure  { echo 'Pipeline gagal! Periksa log SonarScanner atau Testing.' }
+        always   { 
+            echo 'Membersihkan workspace...'
+            cleanWs() 
+        }
+        success  {
+            echo 'Pipeline sukses! Periksa SonarQube.' 
+        }
+        failure  { 
+            echo 'Pipeline gagal! Periksa log SonarScanner atau Testing.' 
+        }
     }
 }
