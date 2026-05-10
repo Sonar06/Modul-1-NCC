@@ -2,7 +2,8 @@ pipeline {
     agent {
         docker {
             image 'python:3.11-slim'
-            args '-u root:root'
+            // KUNCI UTAMA: Mount docker.sock agar kontainer Python bisa perintahin Docker Host buat Deploy
+            args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
@@ -14,6 +15,22 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
+            }
+        }
+
+        stage('Build Environment') {
+            steps {
+                sh '''
+                apt-get update && apt-get install -y wget unzip
+                pip install --upgrade pip
+                pip install -r requirements.txt pytest pytest-cov flake8
+
+                if [ ! -d "/opt/sonar-scanner" ]; then
+                    wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+                    unzip -o sonar-scanner-cli-5.0.1.3006-linux.zip
+                    mv sonar-scanner-5.0.1.3006-linux /opt/sonar-scanner
+                fi
+                '''
             }
         }
 
@@ -35,7 +52,6 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('Sonarqube_server') {
-                    // Backslash dihapus dan digabung agar tidak ada error spasi lagi
                     sh '''
                     /opt/sonar-scanner/bin/sonar-scanner \
                       -Dsonar.projectKey=route-optimizer \
@@ -57,18 +73,12 @@ pipeline {
 
         stage('Deploy') {
             steps {
+                echo 'Mendeploy aplikasi menggunakan Docker Compose dari dalam kontainer...'
+                /* Karena kita sudah mount /var/run/docker.sock di args atas, 
+                   kita butuh docker-cli di sini. Kita install versi kecil saja.
+                */
                 sh '''
-                # Ini langkah minimal install Docker CLI di Debian (slim)
-                apt-get update && apt-get install -y ca-certificates curl gnupg
-                install -m 0755 -d /etc/apt/keyrings
-                curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-                chmod a+r /etc/apt/keyrings/docker.gpg
-
-                echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-                
-                apt-get update && apt-get install -y docker-ce-cli docker-compose-plugin
-
-                # Baru jalankan deploy
+                apt-get update && apt-get install -y docker.io
                 docker compose down || true
                 docker compose up -d --build
                 '''
@@ -82,10 +92,10 @@ pipeline {
             cleanWs() 
         }
         success {
-            echo 'Pipeline sukses! Aplikasi sudah terdeploy.' 
+            echo 'Pipeline sukses! Aplikasi sudah terdeploy di Port 80/3000.' 
         }
         failure { 
-            echo 'Pipeline gagal! Periksa log SonarScanner atau Testing.' 
+            echo 'Pipeline gagal! Cek stage yang merah.' 
         }
     }
 }
