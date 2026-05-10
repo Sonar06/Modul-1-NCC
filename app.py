@@ -62,14 +62,20 @@ def health_check():
 def calculate():
     data = request.get_json()
     start = data.get('start_city')
-    destinations = data.get('destinations') # Ini sekarang berupa List
+    destinations = data.get('destinations')
 
     if not start or not destinations:
-        return jsonify({'error': 'Data tidak lengkap!'}), 400
+        return jsonify({'error': 'Pilih kota asal dan minimal satu tujuan!'}), 400
 
-    route, dist = nearest_neighbor(start, destinations)
-    
-    return jsonify({'route': route, 'distance': dist})
+    # Menghapus kota asal dari daftar tujuan jika pengguna tidak sengaja memilihnya dua kali
+    if start in destinations:
+        destinations.remove(start)
+
+    try:
+        route, dist = nearest_neighbor(start, destinations)
+        return jsonify({'route': route, 'distance': dist})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     host = os.getenv('FLASK_RUN_HOST', '127.0.0.1')
