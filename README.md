@@ -196,6 +196,7 @@ keterangan:
     - Code Linting: Memeriksa kerapian dan standar penulisan kode menggunakan flake8.
 - Stage SonarQube Analysis: Melakukan pemindaian statis terhadap kode untuk mendeteksi celah keamanan, bug, dan kerentanan.
 - Stage Quality Gate: Menunggu hasil penilaian dari server SonarQube; jika kualitas kode di bawah standar, pipeline otomatis dihentikan (abort).
+- Stage Deploy: Melakukan pembaruan aplikasi otomatis pada VPS menggunakan Docker Compose.
 
 3. Post-Actions
 Always: Membersihkan folder kerja (workspace) setelah selesai agar tidak memenuhi penyimpanan.
@@ -205,5 +206,22 @@ Always: Membersihkan folder kerja (workspace) setelah selesai agar tidak memenuh
 
 ## Alur Pipeline (Flow)
 
-Checkout -> Setup -> Backend Build & Test (Parallel) -> SonarQube Analysis -> Quality Gate -> Post Actions
+Checkout -> Setup -> Backend Build & Test (Parallel) -> SonarQube Analysis -> Quality Gate -> Deploy -> Post Actions
+
+## jika sudah terdeploy
+
+jika semua sudah berhasil maka tampilan jenkins akan seperti ini:
+
+![alt text](<media/Screenshot 2026-05-10 145325.png>)
+
+dan untuk dashboard sonarqube akan seperti ini:
+
+![alt text](<media/Screenshot 2026-05-10 145339.png>)
+
+dan jika semua sudah benar maka akan terdeploy dan bisa diakses:
+
+![alt text](<media/Screenshot 2026-05-10 145359.png>)
+
+
+### Link VPS : <a href="http://70.153.136.203/" target="_blank">http://70.153.136.203</a>
 
