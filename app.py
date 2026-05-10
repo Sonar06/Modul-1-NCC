@@ -1,5 +1,6 @@
+import os
 from flask import Flask, request, jsonify, render_template
-import json, os
+import json
 from datetime import datetime
 
 app = Flask(__name__)
@@ -8,6 +9,7 @@ app = Flask(__name__)
 with open('distance_matrix.json') as f:
     distance_matrix = json.load(f)
 
+# Koordinat kota untuk plotting
 city_coords = {
     'Jakarta': (0, 0), 'Tangerang': (-10, 10), 'Serang': (-80, 5),
     'Bogor': (20, -50), 'Cianjur': (60, -50), 'Purwakarta': (70, -20),
@@ -34,20 +36,42 @@ def nearest_neighbor(start, destinations):
     total_distance = 0
     remaining = set(destinations)
     current = start
+
     while remaining:
+        # Mencari kota terdekat dari lokasi sekarang
         next_city = min(remaining, key=lambda x, c=current: distance_matrix[c][x])
         total_distance += distance_matrix[current][next_city]
         route.append(next_city)
         current = next_city
         remaining.remove(next_city)
+
+    # Kembali ke depot asal
     total_distance += distance_matrix[current][start]
     route.append(start)
     return route, total_distance
 
 @app.route('/', methods=['GET'])
 def index():
+    # SonarQube fix: sorted langsung menerima dictionary keys
     cities = sorted(distance_matrix.keys())
     return render_template('index.html', cities=cities, coords=city_coords)
+
+@app.route('/calculate', methods=['POST'])
+def calculate():
+    data = request.get_json()
+    start = data.get('start_city')
+    destinations = data.get('destinations')
+
+    # Validasi input
+    if not start or not destinations:
+        return jsonify({'error': 'Pilih kota asal dan minimal satu tujuan!'}), 400
+    
+    # Memastikan destinations dalam format list (jika user hanya kirim 1 kota)
+    if isinstance(destinations, str):
+        destinations = [destinations]
+
+    route, dist = nearest_neighbor(start, destinations)
+    return jsonify({'route': route, 'distance': dist})
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -57,25 +81,6 @@ def health_check():
         "status": "UP",
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }), 200
-
-@app.route('/calculate', methods=['POST'])
-def calculate():
-    data = request.get_json()
-    start = data.get('start_city')
-    destinations = data.get('destinations')
-
-    if not start or not destinations:
-        return jsonify({'error': 'Pilih kota asal dan minimal satu tujuan!'}), 400
-
-    # Menghapus kota asal dari daftar tujuan jika pengguna tidak sengaja memilihnya dua kali
-    if start in destinations:
-        destinations.remove(start)
-
-    try:
-        route, dist = nearest_neighbor(start, destinations)
-        return jsonify({'route': route, 'distance': dist})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     host = os.getenv('FLASK_RUN_HOST', '127.0.0.1')

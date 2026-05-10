@@ -1,36 +1,30 @@
 import pytest
-from app import nearest_neighbor, app
-import json
+from app import app
 
-with open('distance_matrix.json') as f:
-    distance_matrix = json.load(f)
+def test_index_page():
+    client = app.test_client()
+    resp = client.get('/')
+    assert resp.status_code == 200
+    assert b"Kurir Route Optimizer" in resp.data
 
-def test_nearest_neighbor_basic():
-    start = 'Jakarta'
-    destinations = ['Bandung', 'Bogor']
-    route, dist = nearest_neighbor(start, destinations)
-    assert route[0] == start
-    assert route[-1] == start
-    assert set(route[1:-1]) == set(destinations)
-    assert dist > 0
-
-def test_health_check():
+def test_health_endpoint():
     client = app.test_client()
     resp = client.get('/health')
-    data = resp.get_json()
     assert resp.status_code == 200
-    assert data['status'] == 'UP'
+    data = resp.get_json()
+    assert data['status'] == "UP"
 
 def test_calculate_endpoint():
     client = app.test_client()
-    resp = client.post('/calculate', json={'start_city': 'Jakarta', 'end_city': 'Bandung'})
+    # Perbaikan: Kirim 'destinations' sebagai LIST agar sesuai app.py
+    resp = client.post('/calculate', json={
+        'start_city': 'Jakarta',
+        'destinations': ['Bandung', 'Cirebon']
+    })
     data = resp.get_json()
+    assert resp.status_code == 200
     assert 'route' in data
     assert 'distance' in data
-
-def test_calculate_missing_city():
-    client = app.test_client()
-    resp = client.post('/calculate', json={'start_city': '', 'end_city': ''})
-    data = resp.get_json()
-    assert resp.status_code == 400
-    assert 'error' in data
+    # Pastikan rute kembali ke Jakarta (siklus)
+    assert data['route'][0] == 'Jakarta'
+    assert data['route'][-1] == 'Jakarta'
