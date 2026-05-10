@@ -2,7 +2,7 @@ pipeline {
     agent {
         docker {
             image 'python:3.11-slim'
-            args '-u root:root'   // Optional: supaya bisa install package
+            args '-u root:root'
         }
     }
 
@@ -20,10 +20,13 @@ pipeline {
         stage('Setup Environment') {
             steps {
                 sh '''
-                python -m venv venv
-                . venv/bin/activate
                 pip install --upgrade pip
                 pip install -r requirements.txt pytest pytest-cov flake8
+                # Install sonar-scanner secara manual di dalam container
+                apt-get update && apt-get install -null -y wget unzip
+                wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+                unzip sonar-scanner-cli-5.0.1.3006-linux.zip
+                mv sonar-scanner-5.0.1.3006-linux /opt/sonar-scanner
                 '''
             }
         }
@@ -32,18 +35,13 @@ pipeline {
             parallel {
                 stage('Unit Tests & Coverage') {
                     steps {
-                        sh '''
-                        . venv/bin/activate
-                        pytest --cov=. --cov-report=xml:reports/coverage.xml
-                        '''
+                        sh 'pytest --cov=. --cov-report=xml:reports/coverage.xml'
                     }
                 }
                 stage('Code Linting') {
                     steps {
-                        sh '''
-                        . venv/bin/activate
-                        flake8 . --exit-zero
-                        '''
+                        // Tambahkan --exclude venv agar tidak error membaca library pihak ketiga
+                        sh 'flake8 . --exclude=venv --exit-zero'
                     }
                 }
             }
@@ -53,10 +51,10 @@ pipeline {
             steps {
                 withSonarQubeEnv('Sonarqube_server') {
                     sh '''
-                    . venv/bin/activate
-                    sonar-scanner \
+                    /opt/sonar-scanner/bin/sonar-scanner \
                       -Dsonar.projectKey=route-optimizer \
                       -Dsonar.sources=. \
+                      -Dsonar.exclusions=venv/** \
                       -Dsonar.python.coverage.reportPaths=reports/coverage.xml
                     '''
                 }
@@ -75,6 +73,6 @@ pipeline {
     post {
         always   { cleanWs() }
         success  { echo 'Pipeline sukses! Periksa SonarQube.' }
-        failure  { echo 'Pipeline gagal!' }
+        failure  { echo 'Pipeline gagal! Periksa log SonarScanner atau Testing.' }
     }
 }
