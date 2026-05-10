@@ -82,7 +82,8 @@ pipeline {
     agent {
         docker {
             image 'python:3.11-slim'
-            args '-u root:root'
+            // KUNCI UTAMA: Mount docker.sock agar kontainer Python bisa perintahin Docker Host buat Deploy
+            args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
@@ -97,28 +98,23 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build Environment') {
             steps {
                 sh '''
-                # Update dan install dependencies untuk download/unzip
-                apt-get update
-                apt-get install -y wget unzip
-
-                # Upgrade pip dan install requirements proyek
+                apt-get update && apt-get install -y wget unzip
                 pip install --upgrade pip
                 pip install -r requirements.txt pytest pytest-cov flake8
 
-                # Download dan Setup Sonar Scanner jika belum ada
                 if [ ! -d "/opt/sonar-scanner" ]; then
                     wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
-                    unzip sonar-scanner-cli-5.0.1.3006-linux.zip
+                    unzip -o sonar-scanner-cli-5.0.1.3006-linux.zip
                     mv sonar-scanner-5.0.1.3006-linux /opt/sonar-scanner
                 fi
                 '''
             }
         }
 
-        stage('test') {
+        stage('Test') {
             parallel {
                 stage('Unit Tests & Coverage') {
                     steps {
@@ -127,7 +123,6 @@ pipeline {
                 }
                 stage('Code Linting') {
                     steps {
-                        // Tambahkan --exclude venv agar tidak error membaca library pihak ketiga
                         sh 'flake8 . --exclude=venv --exit-zero'
                     }
                 }
@@ -141,7 +136,7 @@ pipeline {
                     /opt/sonar-scanner/bin/sonar-scanner \
                       -Dsonar.projectKey=route-optimizer \
                       -Dsonar.sources=. \
-                      -Dsonar.exclusions=venv/** \  
+                      -Dsonar.exclusions=venv/** \
                       -Dsonar.python.coverage.reportPaths=reports/coverage.xml
                     '''
                 }
@@ -150,23 +145,39 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 10, unit: 'MINUTES') {
+                timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Mendeploy aplikasi menggunakan Docker Compose...'
+                sh '''
+                # Kita install docker-compose (versi standalone) yang lebih stabil di kontainer
+                if ! command -v docker-compose &> /dev/null; then
+                    apt-get update && apt-get install -y docker-compose
+                fi
+                
+                # Gunakan docker-compose (dengan tanda strip)
+                docker-compose down || true
+                docker-compose up -d --build
+                '''
             }
         }
     }
 
     post {
-        always   { 
+        always { 
             echo 'Membersihkan workspace...'
             cleanWs() 
         }
-        success  {
-            echo 'Pipeline sukses! Periksa SonarQube.' 
+        success {
+            echo 'Pipeline sukses! Aplikasi sudah terdeploy di Port 80/3000.' 
         }
-        failure  { 
-            echo 'Pipeline gagal! Periksa log SonarScanner atau Testing.' 
+        failure { 
+            echo 'Pipeline gagal! Cek stage yang merah.' 
         }
     }
 }
@@ -192,8 +203,7 @@ Always: Membersihkan folder kerja (workspace) setelah selesai agar tidak memenuh
 - Success/Failure: Memberikan notifikasi status akhir pipeline melalui log Jenkins.
 
 
+## Alur Pipeline (Flow)
 
-
-
-
+Checkout -> Setup -> Backend Build & Test (Parallel) -> SonarQube Analysis -> Quality Gate -> Post Actions
 
