@@ -73,14 +73,16 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo 'Mendeploy aplikasi menggunakan Docker Compose dari dalam kontainer...'
-                /* Karena kita sudah mount /var/run/docker.sock di args atas, 
-                   kita butuh docker-cli di sini. Kita install versi kecil saja.
-                */
+                echo 'Mendeploy aplikasi menggunakan Docker Compose...'
                 sh '''
-                apt-get update && apt-get install -y docker.io
-                docker compose down || true
-                docker compose up -d --build
+                # Kita install docker-compose (versi standalone) yang lebih stabil di kontainer
+                if ! command -v docker-compose &> /dev/null; then
+                    apt-get update && apt-get install -y docker-compose
+                fi
+                
+                # Gunakan docker-compose (dengan tanda strip)
+                docker-compose down || true
+                docker-compose up -d --build
                 '''
             }
         }
