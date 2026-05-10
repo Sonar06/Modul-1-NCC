@@ -17,7 +17,7 @@ pipeline {
             }
         }
 
-        stage('Setup Environment') {
+        stage('Build') {
             steps {
                 sh '''
                 # Update dan install dependencies untuk download/unzip
@@ -38,7 +38,7 @@ pipeline {
             }
         }
 
-        stage('Verification') {
+        stage('test') {
             parallel {
                 stage('Unit Tests & Coverage') {
                     steps {
