@@ -72,7 +72,7 @@ def nearest_neighbor(start, destinations):
     current = start
 
     while remaining:
-        next_city = min(remaining, key=lambda x: distance_matrix[current][x])
+        next_city = min(remaining, key=lambda x, c=current: distance_matrix[c][x])
         total_distance += distance_matrix[current][next_city]
         route.append(next_city)
         current = next_city
@@ -84,7 +84,7 @@ def nearest_neighbor(start, destinations):
     return route, total_distance
 
 # --- Routes ---
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
     cities = list(distance_matrix.keys())
     return render_template('index.html', cities=cities, coords=city_coords)
