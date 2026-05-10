@@ -108,3 +108,6 @@ def calculate():
 
     route, dist = nearest_neighbor(start, [end])
     return jsonify({'route': route, 'distance': dist})
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
