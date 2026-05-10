@@ -1,5 +1,10 @@
 pipeline {
-    agent none
+    agent {
+        docker {
+            image 'python:3.11-slim'
+            args '-u root:root'
+        }
+    }
 
     environment {
         SONAR_TOKEN = credentials('Sonarqube')
