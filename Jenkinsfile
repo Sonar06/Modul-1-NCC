@@ -1,16 +1,20 @@
 pipeline {
     agent {
-        docker { image 'python:3.11-slim' } // pakai image Python siap pakai
+        docker {
+            image 'python:3.11-slim'
+            args '-u root:root'   // Optional: supaya bisa install package
+        }
     }
 
     environment {
-        SONARQUBE_ENV = 'Sonarqube'
-        SCANNER_HOME  = tool 'Sonarqube'
+        SONAR_TOKEN = credentials('Sonarqube')
     }
 
     stages {
         stage('Checkout') {
-            steps { checkout scm }
+            steps {
+                checkout scm
+            }
         }
 
         stage('Setup Environment') {
@@ -24,46 +28,53 @@ pipeline {
             }
         }
 
-        stage('Test') {
-            steps {
-                sh '''
-                . venv/bin/activate
-                pytest --cov=. --cov-report=xml:coverage.xml
-                flake8 . --exit-zero
-                '''
+        stage('Verification') {
+            parallel {
+                stage('Unit Tests & Coverage') {
+                    steps {
+                        sh '''
+                        . venv/bin/activate
+                        pytest --cov=. --cov-report=xml:reports/coverage.xml
+                        '''
+                    }
+                }
+                stage('Code Linting') {
+                    steps {
+                        sh '''
+                        . venv/bin/activate
+                        flake8 . --exit-zero
+                        '''
+                    }
+                }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("${SONARQUBE_server}") {
-                    sh """
-                    ${SCANNER_HOME}/bin/sonar-scanner \
+                withSonarQubeEnv('Sonarqube_server') {
+                    sh '''
+                    . venv/bin/activate
+                    sonar-scanner \
                       -Dsonar.projectKey=route-optimizer \
                       -Dsonar.sources=. \
-                      -Dsonar.python.coverage.reportPaths=coverage.xml
-                    """
+                      -Dsonar.python.coverage.reportPaths=reports/coverage.xml
+                    '''
                 }
             }
         }
 
-        stage('Deploy') {
+        stage('Quality Gate') {
             steps {
-                sh '''
-                docker stop route-app || true
-                docker rm route-app || true
-                docker compose up -d --build --remove-orphans
-                '''
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
     }
 
     post {
-        always {
-            echo 'Pipeline selesai'
-            cleanWs()
-        }
-        success { echo 'Pipeline berhasil!' }
-        failure { echo 'Pipeline gagal!' }
+        always   { cleanWs() }
+        success  { echo 'Pipeline sukses! Periksa SonarQube.' }
+        failure  { echo 'Pipeline gagal!' }
     }
 }
