@@ -38,20 +38,26 @@ body {
     margin-top: 20px;
     position: relative;
 }
+
 .node {
     position: absolute;
     width: 30px;
     height: 30px;
-    background-color: #007bff;
-    color: white;
+    background-color: #004a99; /* Biru yang lebih gelap agar kontras dengan putih */
+    color: #ffffff;
     border-radius: 50%;
     text-align: center;
     line-height: 30px;
     font-size: 12px;
+    font-weight: bold; 
 }
-.line {
-    position: absolute;
-    background-color: red;
-    height: 2px;
-    transform-origin: 0 0;
+
+.city-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    background-color: #004a99; 
+    color: white;
+    border-radius: 20px;
+    margin: 5px;
+    font-size: 0.9em;
 }
