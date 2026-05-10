@@ -57,6 +57,7 @@ pipeline {
                       -Dsonar.projectKey=route-optimizer \
                       -Dsonar.sources=. \
                       -Dsonar.exclusions=venv/** \
+                      -Dsonar.exclusions=venv/**,static/js/*.js \
                       -Dsonar.python.coverage.reportPaths=reports/coverage.xml
                     '''
                 }
