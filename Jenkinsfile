@@ -2,16 +2,14 @@ pipeline {
     agent {
         docker {
             image 'python:3.11-slim'
-            // Menggunakan user root agar bisa install package & akses socket host
-            // Menonaktifkan TLS verify untuk menghindari error x509 certificate
-            args '-u 0:0 -v /var/run/docker.sock:/var/run/docker.sock -e DOCKER_TLS_VERIFY=0'
+            // Tambahkan -e DOCKER_HOST="..." langsung di dalam args
+            args '-u 0:0 -v /var/run/docker.sock:/var/run/docker.sock -e DOCKER_HOST=unix:///var/run/docker.sock -e DOCKER_TLS_VERIFY=0'
         }
     }
 
     environment {
-        // Mengambil token dari Jenkins Credentials dengan ID 'Sonarqube'
         SONAR_TOKEN = credentials('Sonarqube')
-        // Memaksa Docker menggunakan socket unix daripada network TCP
+        // Memastikan semua tool di dalam pipeline memakai socket
         DOCKER_HOST = 'unix:///var/run/docker.sock'
     }
 
