@@ -2,8 +2,8 @@ pipeline {
     agent {
         docker {
             image 'python:3.11-slim'
-            // KUNCI UTAMA: Mount docker.sock agar kontainer Python bisa perintahin Docker Host buat Deploy
-            args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock'
+            // Gunakan -u 0:0 untuk memastikan akses root agar bisa install apt-get & pakai docker.sock
+            args '-u 0:0 -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
@@ -12,19 +12,13 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Build Environment') {
             steps {
                 sh '''
-                apt-get update && apt-get install -y wget unzip
+                apt-get update && apt-get install -y wget unzip docker-compose
                 pip install --upgrade pip
                 pip install -r requirements.txt pytest pytest-cov flake8
-
+                
                 if [ ! -d "/opt/sonar-scanner" ]; then
                     wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
                     unzip -o sonar-scanner-cli-5.0.1.3006-linux.zip
@@ -36,15 +30,11 @@ pipeline {
 
         stage('Test') {
             parallel {
-                stage('Unit Tests & Coverage') {
-                    steps {
-                        sh 'pytest --cov=. --cov-report=xml:reports/coverage.xml'
-                    }
+                stage('Unit Tests') {
+                    steps { sh 'pytest --cov=. --cov-report=xml:reports/coverage.xml' }
                 }
-                stage('Code Linting') {
-                    steps {
-                        sh 'flake8 . --exclude=venv --exit-zero'
-                    }
+                stage('Linting') {
+                    steps { sh 'flake8 . --exclude=venv --exit-zero' }
                 }
             }
         }
@@ -56,8 +46,7 @@ pipeline {
                     /opt/sonar-scanner/bin/sonar-scanner \
                       -Dsonar.projectKey=route-optimizer \
                       -Dsonar.sources=. \
-                      -Dsonar.exclusions=venv/** \
-                      -Dsonar.exclusions=venv/**,static/js/*.js \
+                      -Dsonar.exclusions=venv/**,static/js/*.js,**/reports/** \
                       -Dsonar.python.coverage.reportPaths=reports/coverage.xml
                     '''
                 }
@@ -74,31 +63,28 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo 'Mendeploy aplikasi menggunakan Docker Compose...'
-                sh '''
-                # Kita install docker-compose (versi standalone) yang lebih stabil di kontainer
-                if ! command -v docker-compose &> /dev/null; then
-                    apt-get update && apt-get install -y docker-compose
-                fi
-                
-                # Gunakan docker-compose (dengan tanda strip)
-                docker-compose down || true
-                docker-compose up -d --build
-                '''
+                // Langsung jalankan karena docker-compose sudah diinstall di stage Build
+                sh 'docker-compose down || true'
+                sh 'docker-compose up -d --build'
             }
         }
     }
 
     post {
-        always { 
-            echo 'Membersihkan workspace...'
-            cleanWs() 
+        always {
+            // cleanWs dipanggil di dalam agen docker yang aktif
+            script {
+                echo 'Cleaning workspace...'
+                cleanWs()
+            }
         }
+        
+        failure {
+            echo 'Build failed! Please check the logs for details.'
+        }
+
         success {
-            echo 'Pipeline sukses! Aplikasi sudah terdeploy di Port 80/3000.' 
+            echo 'Build succeeded! Application deployed successfully.'
         }
-        failure { 
-            echo 'Pipeline gagal! Cek stage yang merah.' 
-        }
-    }
+    
 }
