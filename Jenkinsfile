@@ -78,7 +78,7 @@ pipeline {
                 cleanWs()
             }
         }
-        
+
         failure {
             echo 'Build failed! Please check the logs for details.'
         }
@@ -86,5 +86,6 @@ pipeline {
         success {
             echo 'Build succeeded! Application deployed successfully.'
         }
+    }
     
 }
