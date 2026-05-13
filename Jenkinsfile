@@ -2,33 +2,23 @@ pipeline {
     agent {
         docker {
             image 'python:3.11-slim'
-            // Tambahkan -e DOCKER_HOST="..." langsung di dalam args
-            args '-u 0:0 -v /var/run/docker.sock:/var/run/docker.sock -e DOCKER_HOST=unix:///var/run/docker.sock -e DOCKER_TLS_VERIFY=0'
+            // Gunakan -u 0:0 untuk memastikan akses root agar bisa install apt-get & pakai docker.sock
+            args '-u 0:0 -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
     environment {
         SONAR_TOKEN = credentials('Sonarqube')
-        // Memastikan semua tool di dalam pipeline memakai socket
-        DOCKER_HOST = 'unix:///var/run/docker.sock'
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                // Mengambil kode dari GitHub
-                checkout scm
-            }
-        }
-
         stage('Build Environment') {
             steps {
                 sh '''
                 apt-get update && apt-get install -y wget unzip docker-compose
                 pip install --upgrade pip
                 pip install -r requirements.txt pytest pytest-cov flake8
-                
-                # Install Sonar Scanner jika belum ada
+
                 if [ ! -d "/opt/sonar-scanner" ]; then
                     wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
                     unzip -o sonar-scanner-cli-5.0.1.3006-linux.zip
@@ -40,16 +30,14 @@ pipeline {
 
         stage('Test') {
             parallel {
-                stage('Unit Tests & Coverage') {
+                stage('Unit Tests') {
                     steps {
-                        // Pastikan folder reports ada untuk menyimpan hasil coverage
-                        sh 'mkdir -p reports'
                         sh 'pytest --cov=. --cov-report=xml:reports/coverage.xml'
                     }
                 }
-                stage('Code Linting') {
+
+                stage('Linting') {
                     steps {
-                        // Flake8 untuk kerapian kode (exit-zero agar build tidak stop hanya karena spasi)
                         sh 'flake8 . --exclude=venv --exit-zero'
                     }
                 }
@@ -58,13 +46,12 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                // Menggunakan konfigurasi server Sonarqube yang sudah didaftarkan di Jenkins
                 withSonarQubeEnv('Sonarqube_server') {
                     sh '''
                     /opt/sonar-scanner/bin/sonar-scanner \
                       -Dsonar.projectKey=route-optimizer \
                       -Dsonar.sources=. \
-                      -Dsonar.exclusions=venv/**,static/js/*.js,**/reports/**,**/test_app.py \
+                      -Dsonar.exclusions=venv/**,static/js/*.js,**/reports/** \
                       -Dsonar.python.coverage.reportPaths=reports/coverage.xml
                     '''
                 }
@@ -73,7 +60,6 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                // Menunggu feedback dari server SonarQube
                 timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
@@ -82,8 +68,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo 'Mendeploy aplikasi menggunakan Docker Compose...'
-                // Perintah deploy langsung ke host via socket binding
+                // Langsung jalankan karena docker-compose sudah diinstall di stage Build
                 sh 'docker-compose down || true'
                 sh 'docker-compose up -d --build'
             }
@@ -92,11 +77,19 @@ pipeline {
 
     post {
         always {
-            // Langsung panggil tanpa bungkus node lagi
+            // cleanWs dipanggil di dalam agen docker yang aktif
             script {
                 echo 'Cleaning workspace...'
                 cleanWs()
             }
+        }
+
+        failure {
+            echo 'Build failed! Please check the logs for details.'
+        }
+
+        success {
+            echo 'Build succeeded! Application deployed successfully.'
         }
     }
 }
