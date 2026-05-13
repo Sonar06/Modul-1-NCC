@@ -94,23 +94,11 @@ pipeline {
 
     post {
         always {
-            // Gunakan node() dengan tanda kurung agar dianggap fungsi valid
-            node {
-                script {
-                    try {
-                        echo 'Cleaning workspace...'
-                        cleanWs()
-                    } catch (e) {
-                        echo "Workspace sudah bersih atau tidak ditemukan: ${e.message}"
-                    }
-                }
+            // Langsung panggil tanpa bungkus node lagi
+            script {
+                echo 'Cleaning workspace...'
+                cleanWs()
             }
-        }
-        success {
-            echo 'Build Berhasil! Aplikasi sudah live.'
-        }
-        failure {
-            echo 'Build Gagal! Periksa log pada stage yang merah.'
         }
     }
 }
