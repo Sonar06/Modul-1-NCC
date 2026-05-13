@@ -94,12 +94,15 @@ pipeline {
 
     post {
         always {
-            // Membungkus cleanWs di dalam blok node('master') atau node {} 
-            // agar konteks FilePath ditemukan dan tidak error saat build gagal
+            // Gunakan node() dengan tanda kurung agar dianggap fungsi valid
             node {
                 script {
-                    echo 'Cleaning workspace...'
-                    cleanWs()
+                    try {
+                        echo 'Cleaning workspace...'
+                        cleanWs()
+                    } catch (e) {
+                        echo "Workspace sudah bersih atau tidak ditemukan: ${e.message}"
+                    }
                 }
             }
         }
